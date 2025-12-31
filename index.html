@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pháo Hoa 2026 - Không Bao Giờ Đè</title>
+    <title>Pháo Hoa 2026 - Fix Tuyệt Đối</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* --- GIAO DIỆN CHUNG --- */
@@ -25,35 +25,40 @@
         /* --- PHẦN TỬ BAY --- */
         .floating-element { 
             position: absolute; 
-            bottom: -450px; /* Xuất phát thấp hẳn bên dưới */
+            bottom: -450px; 
             padding: 15px 20px; 
             border-radius: 25px; 
             font-size: 17px; 
             font-weight: 600;
             color: white; 
-            background: rgba(0, 0, 0, 0.85); /* Nền tối để che pháo hoa */
+            background: rgba(0, 0, 0, 0.85); 
             border: 2px solid var(--neon-pink); 
             box-shadow: 0 0 15px var(--neon-pink); 
             text-shadow: 0 0 2px black; 
             
-            width: 280px; /* Cố định chiều rộng để dễ tính toán vị trí */
-            text-align: right; 
-            
+            /* Giới hạn độ rộng để không quá to */
+            max-width: 280px; 
             white-space: normal; 
             line-height: 1.5;
-            animation: floatUpSmooth linear forwards; 
+            
+            /* Tốc độ bay: Cực kỳ ổn định (18s) */
+            animation: floatUpSmooth 18s linear forwards; 
             opacity: 0;
             z-index: 20;
         }
         
-        /* Cấu hình riêng cho ẢNH */
+        /* CẤU HÌNH RIÊNG CHO ẢNH (BÊN TRÁI) */
         .floating-element.is-image { 
-            padding: 0; 
-            background: transparent; 
-            border: none; 
-            box-shadow: none; 
-            width: 200px; /* Ảnh rộng 200px */
-            text-align: center; 
+            padding: 0; background: transparent; border: none; box-shadow: none; 
+            width: 180px; /* Ảnh rộng cố định 180px */
+            text-align: center;
+            /* Ảnh sẽ dùng thuộc tính LEFT */ 
+        }
+        
+        /* CẤU HÌNH RIÊNG CHO CHỮ (BÊN PHẢI) */
+        .floating-element.is-text {
+            /* Chữ sẽ dùng thuộc tính RIGHT để không bị tràn lề */
+            text-align: right; /* Canh lề chữ sang phải cho đẹp */
         }
         
         .floating-element img { 
@@ -64,10 +69,10 @@
             object-fit: cover;
         }
         
-        /* Animation bay: Chậm và đều */
+        /* Hiệu ứng bay lên */
         @keyframes floatUpSmooth { 
             0% { transform: translateY(0) scale(0.9); opacity: 0; } 
-            5% { opacity: 1; } /* Hiện ra nhanh */
+            5% { opacity: 1; } 
             15% { transform: translateY(-15vh) scale(1); } 
             85% { opacity: 1; }
             100% { transform: translateY(-130vh) scale(1); opacity: 0; } 
@@ -94,7 +99,7 @@
     </div>
 
     <script>
-        // --- 1. DỮ LIỆU CỦA BẠN ---
+        // --- 1. DỮ LIỆU ---
         const messages = [
             "Chúc bạn năm mới luôn vui vẻ và cười thật nhiều nha 😄✨",
             "Bỏ qua hết những muộn phiền tiêu cực không vui ở lại năm cũ nè 🗑️👋",
@@ -190,19 +195,12 @@
             requestAnimationFrame(loop);
         }
 
-        // --- 4. HỆ THỐNG BAY PHÂN LÀN TUẦN TỰ (ROUND ROBIN) ---
-        // Không dùng random, dùng thứ tự cố định để đảm bảo khoảng cách
-
-        // Cấu hình các làn đường cố định (Đơn vị: % tính từ lề trái)
-        const IMG_LANES = [5, 30]; // ẢNH: Làn 1 (5%), Làn 2 (30%)
-        const TXT_LANES = [65, 85]; // CHỮ: Làn 1 (65%), Làn 2 (85%) - nhưng vì text align right nên sẽ canh theo kiểu khác
-
-        let currentImgLane = 0; // Biến đếm để đổi làn ảnh
-        let currentTxtLane = 0; // Biến đếm để đổi làn chữ
-
-        function spawnImage() {
+        // --- 4. HỆ THỐNG BAY: QUY HOẠCH LÀN ĐƯỜNG NGHIÊM NGẶT ---
+        
+        // Hàm tạo ẢNH (Luôn ở bên TRÁI)
+        // positionMode: 0 = Sát lề trái, 1 = Gần giữa trái
+        function spawnImage(positionMode) {
             if (images.length === 0) return;
-            
             const el = document.createElement('div');
             el.className = 'floating-element is-image';
             
@@ -211,38 +209,32 @@
             img.onerror = function() { el.remove(); };
             el.appendChild(img);
 
-            // Lấy vị trí làn hiện tại
-            const leftPos = IMG_LANES[currentImgLane];
-            el.style.left = leftPos + '%';
+            // CỐ ĐỊNH VỊ TRÍ LEFT
+            // Mode 0: Cách trái 5% (Sát viền nhưng không mất)
+            // Mode 1: Cách trái 25% (Không bao giờ chạm vào bên phải)
+            if (positionMode === 0) el.style.left = '5%';
+            else el.style.left = '25%';
 
-            // Đổi sang làn kia cho lần sau
-            currentImgLane = (currentImgLane + 1) % IMG_LANES.length;
-
-            el.style.animationDuration = '18s'; // Tốc độ cố định để dễ kiểm soát
             document.getElementById('floating-container').appendChild(el);
-            setTimeout(() => el.remove(), 18000);
+            setTimeout(() => el.remove(), 18000); // Xóa sau khi bay xong
         }
 
-        function spawnText() {
+        // Hàm tạo CHỮ (Luôn ở bên PHẢI)
+        // positionMode: 0 = Sát lề phải, 1 = Gần giữa phải
+        function spawnText(positionMode) {
             const el = document.createElement('div');
-            el.className = 'floating-element';
+            el.className = 'floating-element is-text';
             
             el.innerText = messages[Math.floor(Math.random() * messages.length)];
             el.style.color = Math.random() > 0.5 ? "#ff66c4" : "#00ffff";
             el.style.borderColor = el.style.color;
 
-            // Lấy vị trí làn hiện tại
-            // Lưu ý: Text căn lề phải, nên ta đặt left xa hơn
-            const leftPos = TXT_LANES[currentTxtLane];
-            el.style.left = leftPos + '%';
-            
-            // Nếu chữ quá dài nó sẽ tràn sang trái, nên ta cần giới hạn right bằng CSS hoặc tính toán
-            // Ở đây ta dùng left % đơn giản, CSS đã có max-width 280px.
+            // CỐ ĐỊNH VỊ TRÍ RIGHT (Tuyệt đối không dùng Left cho bên phải)
+            // Mode 0: Cách phải 5% (Sát viền phải nhưng an toàn)
+            // Mode 1: Cách phải 25% (Không chạm vào bên trái)
+            if (positionMode === 0) el.style.right = '5%';
+            else el.style.right = '25%';
 
-            // Đổi sang làn kia cho lần sau
-            currentTxtLane = (currentTxtLane + 1) % TXT_LANES.length;
-
-            el.style.animationDuration = '18s';
             document.getElementById('floating-container').appendChild(el);
             setTimeout(() => el.remove(), 18000);
         }
@@ -250,28 +242,37 @@
         function startShow() {
             loop();
             createFirework();
-            
-            // BẮT ĐẦU CHU KỲ
-            // 1. Xuất hiện ngay lập tức: Ảnh làn 1, Chữ làn 1
-            spawnImage(); 
-            spawnText();
-
-            // 2. Thiết lập chu kỳ bắn pháo hoa
             setInterval(createFirework, 800); 
 
-            // 3. Thiết lập chu kỳ xuất hiện Ảnh và Chữ
-            // QUAN TRỌNG: Khoảng cách thời gian phải đủ lớn.
-            // Nếu bay mất 18s, ta chờ 6s mới thả cái tiếp theo ở làn KHÁC.
-            // Như vậy:
-            // 0s: Ảnh A (Làn 1)
-            // 6s: Ảnh B (Làn 2)
-            // 12s: Ảnh C (Làn 1) -> Lúc này Ảnh A đã bay được 12/18 quãng đường -> Rất an toàn, không đè.
+            // --- BỘ ĐIỀU KHIỂN NHỊP ĐIỆU ---
+            // Thay vì random, ta dùng một vòng lặp cố định (Cycle)
+            // Tổng chu kỳ: 12 giây. Mỗi lần gọi cách nhau 3 giây.
+            // Thứ tự: Ảnh Ngoài -> Chữ Ngoài -> Ảnh Trong -> Chữ Trong
+            // Vì thời gian bay là 18s, nên khi quay lại vị trí cũ thì cái trước đã bay rất xa rồi.
             
-            setInterval(() => {
-                spawnImage();
-                // Cho chữ xuất hiện lệch 1 chút so với ảnh cho tự nhiên (sau 1s)
-                setTimeout(spawnText, 1000); 
-            }, 6000); 
+            let step = 0;
+            
+            // Gọi hàm này ngay lập tức
+            const runSequence = () => {
+                switch (step) {
+                    case 0:
+                        spawnImage(0); // Ảnh sát trái
+                        break;
+                    case 1:
+                        spawnText(0);  // Chữ sát phải
+                        break;
+                    case 2:
+                        spawnImage(1); // Ảnh gần giữa
+                        break;
+                    case 3:
+                        spawnText(1);  // Chữ gần giữa
+                        break;
+                }
+                step = (step + 1) % 4; // Quay vòng 0, 1, 2, 3 -> 0...
+            };
+
+            runSequence(); // Chạy cái đầu tiên ngay
+            setInterval(runSequence, 3500); // Cứ 3.5 giây ra một cái mới
         }
     </script>
 </body>
