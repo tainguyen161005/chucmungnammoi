@@ -3,59 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pháo Hoa 2026 - Perfect Version</title>
+    <title>Pháo Hoa 2026 - Ảnh Trái Chữ Phải</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        /* --- 1. GIAO DIỆN CHUNG --- */
+        /* --- GIAO DIỆN CHUNG --- */
         :root { --neon-pink: #ff66c4; --neon-purple: #ad00ff; --neon-blue: #00ffff; --bg-color: #000000; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: var(--bg-color); overflow: hidden; font-family: 'Poppins', sans-serif; color: white; }
 
-        /* Màn hình chờ */
         .overlay-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; transition: opacity 0.8s; }
         .overlay-screen.hidden { opacity: 0; pointer-events: none; }
 
-        /* Nút Start */
         #btn-start { padding: 20px 50px; font-size: 28px; font-weight: bold; background: linear-gradient(45deg, #ff0043, #ff69b4); border: none; color: white; border-radius: 50px; cursor: pointer; box-shadow: 0 0 30px #ff0043; font-family: 'Dancing Script', cursive; animation: pulse 1s infinite; margin-top: 20px; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* Màn hình chính */
         #main-container { position: relative; width: 100%; height: 100%; opacity: 0; transition: opacity 1s; }
         #main-container.visible { opacity: 1; }
         
-        /* Canvas pháo hoa */
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
-            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
-        }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
         #floating-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
 
-        /* --- 2. PHẦN TỬ BAY (CHỮ/ẢNH) --- */
+        /* --- PHẦN TỬ BAY (CHỮ/ẢNH) --- */
         .floating-element { 
             position: absolute; 
-            bottom: -350px; /* Bắt đầu từ dưới màn hình */
+            bottom: -350px;
             padding: 15px 20px; 
             border-radius: 25px; 
             font-size: 18px; 
             font-weight: 600;
             color: white; 
-            /* Nền tối bán trong suốt để chữ dễ đọc */
             background: rgba(0, 0, 0, 0.75); 
             border: 2px solid var(--neon-pink); 
             box-shadow: 0 0 15px var(--neon-pink); 
             text-shadow: 0 0 2px black; 
-            
-            /* Giới hạn chiều rộng */
             max-width: 320px; 
-            text-align: center; 
+            
+            /* THAY ĐỔI: Căn lề phải cho chữ vì nó sẽ nằm bên phải */
+            text-align: right; 
+            
             white-space: normal; 
             line-height: 1.5;
-            
-            /* Animation bay lên */
             animation: floatUpSmooth linear forwards; 
             opacity: 0;
-            z-index: 20; /* Luôn nằm trên pháo hoa */
+            z-index: 20;
         }
         
-        .floating-element.is-image { padding: 0; background: transparent; border: none; box-shadow: none; max-width: none; }
+        /* Ảnh thì reset lại padding và border */
+        .floating-element.is-image { 
+            padding: 0; 
+            background: transparent; 
+            border: none; 
+            box-shadow: none; 
+            max-width: none; 
+            text-align: center; /* Ảnh thì căn giữa hộp của nó */
+        }
         
         .floating-element img { 
             width: 180px; height: auto; 
@@ -65,7 +65,6 @@
             object-fit: cover;
         }
         
-        /* Hiệu ứng bay lên mượt mà */
         @keyframes floatUpSmooth { 
             0% { transform: translateY(0) scale(0.8); opacity: 0; } 
             10% { opacity: 1; transform: translateY(-15vh) scale(1); } 
@@ -78,7 +77,6 @@
     </style>
 </head>
 <body>
-
     <div id="start-screen" class="overlay-screen">
         <h1 style="font-size: 40px; text-align: center;">CHÚC MỪNG NĂM MỚI 2026</h1>
         <div id="status-msg">Đang tải tài nguyên...</div>
@@ -104,7 +102,6 @@
             "Sẽ không có cái nắng nào chói chang bằng được nụ cười của bạn 😁💖"
         ];
         
-        // Danh sách ảnh (đảm bảo file nằm cùng thư mục)
         const images = [
             "5f0fcd1a-df75-43f3-b37b-e9b36a427b6f.jpg",
             "da62a5c5-ce57-41f4-b46c-860e4e4c8028.jpg",
@@ -114,10 +111,9 @@
             "2aca0a23-94ff-4cb8-bb98-8236b5468e60.jpg"
         ];
 
-        // --- 2. XỬ LÝ ÂM THANH ---
+        // --- 2. XỬ LÝ ÂM THANH & LOGIC START GAME (Giữ nguyên) ---
         const AUDIO_FILE = "tieng_phao_hoa_no-www_tiengdong_com.mp3";
         const boomSound = new Audio();
-        
         boomSound.src = AUDIO_FILE;
         boomSound.oncanplaythrough = () => {
             document.getElementById('status-msg').innerText = "Sẵn sàng! ✅";
@@ -128,14 +124,8 @@
             document.getElementById('status-msg').innerText = "Không tìm thấy file nhạc (Vẫn chạy hình ảnh).";
             document.getElementById('btn-start').style.display = "block";
         };
+        function playMySound() { const sound = boomSound.cloneNode(); sound.volume = 1.0; sound.play().catch(e => {}); }
 
-        function playMySound() {
-            const sound = boomSound.cloneNode();
-            sound.volume = 1.0; 
-            sound.play().catch(e => {});
-        }
-
-        // --- 3. LOGIC START GAME ---
         const startBtn = document.getElementById('btn-start');
         const startScreen = document.getElementById('start-screen');
         const introScreen = document.getElementById('intro-screen');
@@ -143,215 +133,119 @@
         const countdownText = document.getElementById('countdown-text');
 
         startBtn.addEventListener('click', () => {
-            // Mồi âm thanh
-            const unlockAudio = new Audio(AUDIO_FILE);
-            unlockAudio.volume = 0.01;
-            unlockAudio.play().catch(e=>{});
-
-            startScreen.classList.add('hidden');
-            introScreen.classList.remove('hidden');
-
+            const unlockAudio = new Audio(AUDIO_FILE); unlockAudio.volume = 0.01; unlockAudio.play().catch(e=>{});
+            startScreen.classList.add('hidden'); introScreen.classList.remove('hidden');
             let count = 3;
             const timer = setInterval(() => {
                 count--;
-                if (count > 0) {
-                    countdownText.innerText = count;
-                } else if (count === 0) {
-                    countdownText.innerHTML = "HAPPY<br>NEW YEAR";
-                    countdownText.style.fontSize = "80px";
-                    playMySound(); 
-                } else {
-                    clearInterval(timer);
-                    introScreen.classList.add('hidden');
-                    mainContainer.classList.add('visible');
-                    startShow();
-                }
+                if (count > 0) { countdownText.innerText = count; } 
+                else if (count === 0) { countdownText.innerHTML = "HAPPY<br>NEW YEAR"; countdownText.style.fontSize = "80px"; playMySound(); } 
+                else { clearInterval(timer); introScreen.classList.add('hidden'); mainContainer.classList.add('visible'); startShow(); }
             }, 1000);
         });
 
-        // --- 4. ENGINE PHÁO HOA ---
+        // --- 3. ENGINE PHÁO HOA (Giữ nguyên) ---
         const canvas = document.getElementById('fireworks-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
-
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize); resize();
-
         class Particle {
             constructor(x, y, color, type) {
-                this.x = x;
-                this.y = y;
-                this.prevX = x;
-                this.prevY = y;
-                this.color = color;
-                this.type = type; 
-
+                this.x = x; this.y = y; this.prevX = x; this.prevY = y; this.color = color; this.type = type;
                 const angle = Math.random() * Math.PI * 2;
                 const speed = type === 'willow' ? Math.random() * 18 + 5 : Math.random() * 22 + 8;
-                this.vx = Math.cos(angle) * speed;
-                this.vy = Math.sin(angle) * speed;
-                
-                this.gravity = 0.2; 
-                this.friction = type === 'willow' ? 0.96 : 0.93; 
-
-                this.alpha = 1;
-                this.decay = Math.random() * 0.015 + 0.005;
-                this.lineWidth = Math.random() * 2 + 1;
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+                this.gravity = 0.2; this.friction = type === 'willow' ? 0.96 : 0.93;
+                this.alpha = 1; this.decay = Math.random() * 0.015 + 0.005; this.lineWidth = Math.random() * 2 + 1;
             }
-
             update() {
-                this.prevX = this.x;
-                this.prevY = this.y;
-                this.vx *= this.friction;
-                this.vy *= this.friction;
-                this.vy += this.gravity; 
-                this.x += this.vx;
-                this.y += this.vy;
-                this.alpha -= this.decay;
+                this.prevX = this.x; this.prevY = this.y; this.vx *= this.friction; this.vy *= this.friction; this.vy += this.gravity;
+                this.x += this.vx; this.y += this.vy; this.alpha -= this.decay;
                 if (this.type === 'willow' && Math.random() < 0.2) { this.alpha = Math.random(); }
             }
-
             draw(ctx) {
-                ctx.save();
-                ctx.globalAlpha = this.alpha;
-                ctx.beginPath();
-                ctx.moveTo(this.prevX, this.prevY);
-                ctx.lineTo(this.x, this.y);
-                ctx.strokeStyle = this.color;
-                ctx.lineWidth = this.lineWidth;
-                ctx.lineCap = 'round';
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.lineWidth/2, 0, Math.PI*2);
-                ctx.fillStyle = 'white';
-                ctx.fill();
-                ctx.restore();
+                ctx.save(); ctx.globalAlpha = this.alpha; ctx.beginPath(); ctx.moveTo(this.prevX, this.prevY); ctx.lineTo(this.x, this.y);
+                ctx.strokeStyle = this.color; ctx.lineWidth = this.lineWidth; ctx.lineCap = 'round'; ctx.stroke();
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.lineWidth/2, 0, Math.PI*2); ctx.fillStyle = 'white'; ctx.fill(); ctx.restore();
             }
         }
-
         function createFirework() {
             const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
             const y = Math.random() * canvas.height * 0.5 + canvas.height * 0.1;
-            const rand = Math.random();
-            let type, color, count;
+            const rand = Math.random(); let type, color, count;
             if (rand < 0.5) { type = 'willow'; color = 'hsl(' + Math.floor(Math.random() * 40 + 20) + ', 100%, 60%)'; count = 180; } 
             else if (rand < 0.8) { type = 'burst'; color = 'hsl(' + Math.floor(Math.random() * 60 + 180) + ', 100%, 70%)'; count = 120; } 
             else { type = 'burst'; color = '#ffffff'; count = 100; }
             setTimeout(() => playMySound(), 100);
             for (let i = 0; i < count; i++) { particles.push(new Particle(x, y, color, type)); }
         }
-
         function loop() {
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.globalCompositeOperation = 'lighter'; 
+            ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = 'lighter';
             for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update();
-                particles[i].draw(ctx);
-                if (particles[i].alpha <= 0) particles.splice(i, 1);
+                particles[i].update(); particles[i].draw(ctx); if (particles[i].alpha <= 0) particles.splice(i, 1);
             }
             requestAnimationFrame(loop);
         }
 
-        // --- 5. HỆ THỐNG BAY KHÔNG ĐÈ NHAU (FIXED OVERLAP) ---
+        // --- 4. HỆ THỐNG BAY (ĐÃ SỬA LỖI ĐÈ NHAU TRIỆT ĐỂ) ---
         
-        // Mảng chứa các vị trí ngang (left%) đang bị chiếm giữ
-        let activeHorizontalPositions = [];
-
-        function createFloating(forceType = null, zone = 'random') {
+        function createFloating(forceType = null) {
             const el = document.createElement('div');
             el.className = 'floating-element';
             
-            // Random loại (Ảnh hoặc Chữ)
+            // Quyết định là Ảnh hay Chữ
             let isImage;
             if (forceType !== null) { isImage = forceType === 'image'; } 
             else { isImage = Math.random() < 0.5 && images.length > 0; }
 
+            let minRange, maxRange;
+
             if (isImage) {
+                // --- LÀ ẢNH: BẮT BUỘC Ở BÊN TRÁI ---
                 el.classList.add('is-image');
                 const img = document.createElement('img');
                 img.src = images[Math.floor(Math.random() * images.length)];
                 img.onerror = function() { el.remove(); };
                 el.appendChild(img);
+                
+                // Vùng trái: từ 5% đến 40% chiều rộng màn hình
+                minRange = 5; maxRange = 40;
+
             } else {
+                // --- LÀ CHỮ: BẮT BUỘC Ở BÊN PHẢI ---
                 el.innerText = messages[Math.floor(Math.random() * messages.length)];
                 el.style.color = Math.random() > 0.5 ? "#ff66c4" : "#00ffff";
                 el.style.borderColor = el.style.color;
+
+                // Vùng phải: từ 55% đến 90% chiều rộng màn hình
+                minRange = 55; maxRange = 90;
             }
 
-            // --- THUẬT TOÁN CHỐNG ĐÈ ---
-            let leftPos;
-            let attempts = 0;
-            let validPosition = false;
-            // Khoảng cách an toàn giữa 2 phần tử (tính bằng %)
-            const minDistance = 20; 
-
-            // Xác định vùng thả
-            let minRange = 10, maxRange = 90;
-            if (zone === 'left') { minRange = 10; maxRange = 40; }
-            if (zone === 'right') { minRange = 60; maxRange = 90; }
-
-            // Thử tối đa 15 lần để tìm chỗ trống
-            while (attempts < 15 && !validPosition) {
-                attempts++;
-                leftPos = Math.random() * (maxRange - minRange) + minRange;
-                
-                // Kiểm tra xem vị trí này có gần ai không
-                let collision = false;
-                for (let activePos of activeHorizontalPositions) {
-                    if (Math.abs(leftPos - activePos) < minDistance) {
-                        collision = true;
-                        break;
-                    }
-                }
-                
-                if (!collision) {
-                    validPosition = true;
-                }
-            }
-
-            // Nếu không tìm được chỗ, hủy lệnh tạo để tránh đè xấu
-            if (!validPosition) return;
-
-            // Chấp nhận vị trí
+            // Chọn vị trí ngẫu nhiên trong vùng đã định
+            const leftPos = Math.random() * (maxRange - minRange) + minRange;
             el.style.left = leftPos + '%';
             
-            // Ghi nhớ vị trí này
-            activeHorizontalPositions.push(leftPos);
-
-            // Thời gian bay (Random từ 12s đến 18s)
+            // Thời gian bay ngẫu nhiên
             const duration = (Math.random() * 6 + 12);
             el.style.animationDuration = duration + 's'; 
             
             document.getElementById('floating-container').appendChild(el);
-
-            // QUAN TRỌNG: Giải phóng vị trí trong mảng sau một khoảng thời gian
-            // (Khi phần tử đã bay lên cao, chỗ dưới đất lại trống cho người khác)
-            setTimeout(() => {
-                const index = activeHorizontalPositions.indexOf(leftPos);
-                if (index > -1) {
-                    activeHorizontalPositions.splice(index, 1);
-                }
-            }, duration * 1000 * 0.4); // Giải phóng sau 40% thời gian bay
-
-            // Xóa phần tử khỏi DOM khi bay xong
             setTimeout(() => el.remove(), duration * 1000);
         }
 
         function startShow() {
             loop();
-            
-            // Bắn phát đầu tiên
             createFirework();
             
-            // Xuất hiện ngay lập tức 1 ảnh bên trái, 1 chữ bên phải
-            createFloating('image', 'left');
-            createFloating('text', 'right');
+            // Xuất hiện ngay 1 cặp Ảnh-Chữ khi bắt đầu
+            createFloating('image'); // Tự động sang trái
+            createFloating('text');  // Tự động sang phải
 
-            // Cài đặt vòng lặp
             setInterval(createFirework, 800); 
-            setInterval(() => createFloating(null, 'random'), 2500); 
+            // Cứ 2.5s tạo ngẫu nhiên 1 cái (hàm sẽ tự lo vị trí)
+            setInterval(() => createFloating(), 2500); 
         }
     </script>
 </body>
