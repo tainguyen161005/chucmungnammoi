@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>Happy New Year 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1 class="title">CHÚC MỪNG<br>NĂM MỚI</h1>
+        <p class="year">2026</p>
+        <button id="start-btn" onclick="startApp()">BẤM ĐỂ KHAI TIỆC 🎉</button>
+        <p class="hint">Bật loa để nghe tiếng pháo nổ nhé 🔊</p>
+    </div>
+
+    <div class="stage-container">
+        <canvas id="trails-canvas"></canvas>
+        <canvas id="main-canvas"></canvas>
+        <div id="wishes-layer"></div>
+        
+        <div class="controls">
+            <div class="btn-control" onclick="toggleSound()">Âm thanh: Bật/Tắt</div>
+        </div>
+
+        <div class="hide">
+            <input class="shell-type" value="Random"> 
+            <input class="shell-size" value="2">
+            <input class="quality-ui" value="2">
+            <input class="sky-lighting" value="2">
+            <input class="scaleFactor" value="1">
+            <input type="checkbox" class="word-shell" checked>
+            <input type="checkbox" class="auto-launch" checked>
+            <input type="checkbox" class="finale-mode">
+            <input type="checkbox" class="hide-controls">
+            <input type="checkbox" class="fullscreen">
+            <input type="checkbox" class="long-exposure">
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
