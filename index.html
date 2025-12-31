@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pháo Hoa 2026 - Căn Giữa An Toàn</title>
+    <title>Pháo Hoa 2026 - Dày Đặc & Mượt Mà</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* --- GIAO DIỆN CHUNG --- */
@@ -22,7 +22,7 @@
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
         #floating-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
 
-        /* --- PHẦN TỬ BAY --- */
+        /* --- PHẦN TỬ BAY CHÍNH (ẢNH & CHỮ) --- */
         .floating-element { 
             position: absolute; 
             bottom: -400px; 
@@ -35,29 +35,22 @@
             border: 2px solid var(--neon-pink); 
             box-shadow: 0 0 15px var(--neon-pink); 
             text-shadow: 0 0 2px black; 
-            
-            /* Kích thước gọn gàng */
             width: 280px; 
-            
-            /* Canh giữa nội dung trong hộp */
             text-align: center; 
-            
             white-space: normal; 
             line-height: 1.5;
             
-            /* Animation bay chậm (18s) */
-            animation: floatUpSmooth 18s linear forwards; 
+            /* Tăng tốc độ bay lên 12s (cũ là 18s) để dọn chỗ nhanh hơn */
+            animation: floatUpMain 12s linear forwards; 
+            
             opacity: 0;
             z-index: 20;
-            
-            /* QUAN TRỌNG: Dùng transform để căn giữa chính xác tại điểm đặt */
-            transform: translateX(-50%);
+            transform: translateX(-50%); /* Căn giữa tại điểm đặt */
         }
         
-        /* CẤU HÌNH RIÊNG CHO ẢNH */
         .floating-element.is-image { 
             padding: 0; background: transparent; border: none; box-shadow: none; 
-            width: 220px; /* Ảnh rộng hơn chút cho đẹp */
+            width: 220px; 
         }
         
         .floating-element img { 
@@ -67,11 +60,28 @@
             box-shadow: 0 0 25px var(--neon-blue); 
             object-fit: cover;
         }
+
+        /* --- PHẦN TỬ PHỤ (ICON LẤP ĐẦY) --- */
+        .filler-icon {
+            position: absolute;
+            bottom: -100px;
+            font-size: 30px;
+            animation: floatUpFiller 8s linear forwards;
+            z-index: 15;
+            opacity: 0.8;
+            filter: drop-shadow(0 0 5px white);
+        }
         
-        @keyframes floatUpSmooth { 
+        @keyframes floatUpMain { 
             0% { bottom: -400px; opacity: 0; } 
             5% { opacity: 1; } 
-            100% { bottom: 120%; opacity: 0; } /* Bay vút lên trên màn hình */
+            100% { bottom: 120%; opacity: 0; } 
+        }
+
+        @keyframes floatUpFiller {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
         }
         
         #countdown-text { font-family: 'Dancing Script', cursive; font-size: 120px; text-shadow: 0 0 30px var(--neon-purple); text-align: center; }
@@ -112,6 +122,8 @@
             "2a1e3136-b5f2-4f83-b2a2-4e14ce44bc74.jpg",
             "2aca0a23-94ff-4cb8-bb98-8236b5468e60.jpg"
         ];
+
+        const icons = ["🌸", "🌼", "✨", "💖", "🦋", "🍀", "🧧", "🎉"];
 
         // --- 2. XỬ LÝ ÂM THANH ---
         const AUDIO_FILE = "tieng_phao_hoa_no-www_tiengdong_com.mp3";
@@ -191,44 +203,50 @@
             requestAnimationFrame(loop);
         }
 
-        // --- 4. HỆ THỐNG BAY CĂN GIỮA (CENTERED LANES) ---
+        // --- 4. HỆ THỐNG BAY NÂNG CAO (Lấp đầy khoảng trống) ---
         
-        // Hàm tạo ẢNH (Bên Trái nhưng gần giữa)
+        // Tạo Ảnh (Luôn ở 30%)
         function spawnImage() {
             if (images.length === 0) return;
             const el = document.createElement('div');
             el.className = 'floating-element is-image';
-            
             const img = document.createElement('img');
             img.src = images[Math.floor(Math.random() * images.length)];
             img.onerror = function() { el.remove(); };
             el.appendChild(img);
-
-            // VỊ TRÍ CỐ ĐỊNH: 30% màn hình tính từ trái
-            // Kết hợp với transform: translateX(-50%) trong CSS, ảnh sẽ nằm chính giữa trục 30%
-            // Cách lề trái 30% là rất an toàn, không bị cắt.
-            el.style.left = '30%';
-
+            el.style.left = '30%'; // Cố định
             document.getElementById('floating-container').appendChild(el);
-            setTimeout(() => el.remove(), 19000); 
+            setTimeout(() => el.remove(), 13000); 
         }
 
-        // Hàm tạo CHỮ (Bên Phải nhưng gần giữa)
+        // Tạo Chữ (Luôn ở 70%)
         function spawnText() {
             const el = document.createElement('div');
             el.className = 'floating-element is-text';
-            
             el.innerText = messages[Math.floor(Math.random() * messages.length)];
             el.style.color = Math.random() > 0.5 ? "#ff66c4" : "#00ffff";
             el.style.borderColor = el.style.color;
-
-            // VỊ TRÍ CỐ ĐỊNH: 70% màn hình tính từ trái
-            // Kết hợp với transform: translateX(-50%), chữ sẽ nằm chính giữa trục 70%
-            // Cách lề phải 30% (100-70), rất an toàn.
-            el.style.left = '70%';
-
+            el.style.left = '70%'; // Cố định
             document.getElementById('floating-container').appendChild(el);
-            setTimeout(() => el.remove(), 19000);
+            setTimeout(() => el.remove(), 13000);
+        }
+
+        // Tạo Icon Lấp Đầy (Ngẫu nhiên ở các vùng trống)
+        function spawnFiller() {
+            const el = document.createElement('div');
+            el.className = 'filler-icon';
+            el.innerText = icons[Math.floor(Math.random() * icons.length)];
+            
+            // Random vị trí để lấp vào chỗ trống (tránh vùng 30% và 70% ra một chút)
+            // Cho xuất hiện ở 10%, 50% (giữa), 90%
+            const positions = [10, 50, 90];
+            const chosenPos = positions[Math.floor(Math.random() * positions.length)];
+            
+            // Thêm chút ngẫu nhiên nhỏ +/- 5%
+            el.style.left = (chosenPos + (Math.random() * 10 - 5)) + '%';
+            
+            document.getElementById('floating-container').appendChild(el);
+            setTimeout(() => el.remove(), 9000);
         }
 
         function startShow() {
@@ -236,28 +254,22 @@
             createFirework();
             setInterval(createFirework, 800); 
 
-            // --- QUY TRÌNH XUẤT HIỆN TUẦN TỰ (Sequential) ---
-            // Để tránh đè nhau, ta không cho xuất hiện cùng lúc mà so le.
+            // --- LỊCH TRÌNH XUẤT HIỆN DÀY ĐẶC ---
             
-            let toggle = true; // true = Ảnh, false = Chữ
+            // 1. Luồng chính: Ảnh và Chữ xen kẽ nhanh (2 giây/lần)
+            // Vì tốc độ bay nhanh hơn (12s), nên 2s/lần là an toàn, không đè.
+            // 0s: Ảnh (trái)
+            // 2s: Chữ (phải)
+            // 4s: Ảnh (trái) -> Ảnh cũ đã bay được 33% màn hình, khoảng cách rất an toàn.
+            let toggle = true;
+            setInterval(() => {
+                if (toggle) spawnImage();
+                else spawnText();
+                toggle = !toggle;
+            }, 2000); 
 
-            const runSequence = () => {
-                if (toggle) {
-                    spawnImage(); // Tạo ảnh bên trái (30%)
-                } else {
-                    spawnText();  // Tạo chữ bên phải (70%)
-                }
-                toggle = !toggle; // Đổi lượt
-            };
-
-            // Chạy cái đầu tiên ngay
-            runSequence();
-            
-            // Cứ 3.5 giây đổi lượt một lần
-            // 0s: Ảnh (30%)
-            // 3.5s: Chữ (70%)
-            // 7.0s: Ảnh (30%) -> Ảnh cũ đã bay được 7s rồi, cách rất xa.
-            setInterval(runSequence, 3500);
+            // 2. Luồng phụ: Icon lấp đầy khoảng trống (1.5 giây/lần)
+            setInterval(spawnFiller, 1500);
         }
     </script>
 </body>
