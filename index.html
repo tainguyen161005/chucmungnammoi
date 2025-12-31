@@ -31,13 +31,16 @@
         @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(-120vh) scale(1); opacity: 0; } }
         
         #countdown-text { font-family: 'Dancing Script', cursive; font-size: 120px; text-shadow: 0 0 30px var(--neon-purple); }
+        
+        #audio-status { margin-top: 10px; font-size: 12px; color: #00ff00; }
     </style>
 </head>
 <body>
 
     <div id="start-screen" class="overlay-screen">
         <h1 style="font-size: 40px; text-align: center;">CHÚC MỪNG NĂM MỚI 2026</h1>
-        <p style="color: #aaa; margin-top: 10px;">(Đã cập nhật âm thanh pháo hoa thực tế)</p>
+        <p style="color: #aaa; margin-top: 10px;">Dùng file nhạc: tieng_phao_hoa_no-www_tiengdong_com.mp3</p>
+        <div id="audio-status"></div>
         <button id="btn-start">BẤM ĐỂ BẮT ĐẦU 🎆</button>
     </div>
 
@@ -53,37 +56,56 @@
     <script>
         // --- CẤU HÌNH DỮ LIỆU ---
         const messages = ["Chúc mừng năm mới 2026! 🎆", "Vạn sự như ý ✨", "Tiền vào như nước 💰", "Sức khỏe dồi dào 💪", "Gia đình hạnh phúc ❤️", "Công danh thăng tiến 🚀", "An khang thịnh vượng 🧧"];
-        // Bạn có thể thay link ảnh khác vào đây
         const images = ["https://cdn-icons-png.flaticon.com/512/3210/3210141.png", "https://cdn-icons-png.flaticon.com/512/3063/3063065.png"];
 
-        // --- QUẢN LÝ ÂM THANH (Sử dụng file MP3 của bạn) ---
-        const AudioPlayer = (function() {
-            // Tên file nhạc bạn cung cấp
-            const src = 'tieng_phao_hoa_no-www_tiengdong_com.mp3';
-            
-            // Tạo sẵn một đối tượng Audio để preload
-            const masterAudio = new Audio(src);
-            masterAudio.preload = 'auto';
+        // --- HỆ THỐNG ÂM THANH MỚI (CHỈ DÙNG FILE CỦA BẠN) ---
+        const MyAudio = {
+            file: 'tieng_phao_hoa_no-www_tiengdong_com.mp3', // Tên file chính xác
+            buffer: null,
+            ctx: null,
 
-            function play() {
-                // Clone (nhân bản) audio để có thể phát nhiều tiếng nổ chồng lên nhau
-                // Nếu không clone, tiếng sau sẽ ngắt tiếng trước
-                const sound = masterAudio.cloneNode();
-                sound.volume = 0.8; // Âm lượng (0.0 đến 1.0)
+            // Tải file âm thanh vào bộ nhớ trước để không bị trễ
+            load: function() {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
                 
-                // Phát nhạc và xử lý lỗi nếu trình duyệt chặn
-                sound.play().catch(error => {
-                    console.log("Trình duyệt chặn tự động phát, cần tương tác người dùng.");
-                });
+                fetch(this.file)
+                    .then(response => {
+                        if (!response.ok) {
+                            document.getElementById('audio-status').innerText = "Lỗi: Không tìm thấy file nhạc! Hãy kiểm tra lại tên file.";
+                            document.getElementById('audio-status').style.color = "red";
+                            throw new Error("File not found");
+                        }
+                        return response.arrayBuffer();
+                    })
+                    .then(arrayBuffer => this.ctx.decodeAudioData(arrayBuffer))
+                    .then(decodedAudio => {
+                        this.buffer = decodedAudio;
+                        document.getElementById('audio-status').innerText = "Đã tải xong file nhạc ✅";
+                    })
+                    .catch(e => console.error(e));
+            },
+
+            // Phát âm thanh từ bộ nhớ
+            play: function() {
+                if (!this.ctx || !this.buffer) return; // Chưa tải xong thì không phát
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+
+                const source = this.ctx.createBufferSource();
+                source.buffer = this.buffer;
                 
-                // Tự động xóa node sau khi phát xong để giải phóng bộ nhớ
-                sound.onended = function() {
-                    this.remove();
-                };
+                // Tăng âm lượng lên 1.5 lần nếu file gốc hơi nhỏ
+                const gainNode = this.ctx.createGain();
+                gainNode.gain.value = 1.5; 
+
+                source.connect(gainNode);
+                gainNode.connect(this.ctx.destination);
+                source.start(0);
             }
+        };
 
-            return { play };
-        })();
+        // Tải nhạc ngay khi mở trang
+        MyAudio.load();
 
         // --- XỬ LÝ SỰ KIỆN ---
         const startBtn = document.getElementById('btn-start');
@@ -93,11 +115,19 @@
         const countdownText = document.getElementById('countdown-text');
 
         startBtn.addEventListener('click', () => {
-            // Phát thử một tiếng để "mồi" trình duyệt cấp quyền
-            // (Âm lượng 0 để người dùng không nghe thấy tiếng mồi này)
-            const dummy = new Audio('tieng_phao_hoa_no-www_tiengdong_com.mp3');
-            dummy.volume = 0;
-            dummy.play().then(() => dummy.pause());
+            // Mồi âm thanh để trình duyệt cấp quyền
+            if (MyAudio.ctx && MyAudio.ctx.state === 'suspended') MyAudio.ctx.resume();
+            
+            // Phát thử 1 tiếng nhẹ (volume cực nhỏ) để kích hoạt loa
+            if(MyAudio.buffer) {
+                const source = MyAudio.ctx.createBufferSource();
+                source.buffer = MyAudio.buffer;
+                const gain = MyAudio.ctx.createGain();
+                gain.gain.value = 0.01; // Gần như im lặng
+                source.connect(gain);
+                gain.connect(MyAudio.ctx.destination);
+                source.start(0);
+            }
 
             startScreen.classList.add('hidden');
             introScreen.classList.remove('hidden');
@@ -110,7 +140,7 @@
                 } else if (count === 0) {
                     countdownText.innerHTML = "HAPPY<br>NEW YEAR";
                     countdownText.style.fontSize = "80px";
-                    AudioPlayer.play(); // Nổ bùm ngay khi chúc mừng
+                    MyAudio.play(); // Nổ bùm ngay chữ chúc mừng
                 } else {
                     clearInterval(timer);
                     introScreen.classList.add('hidden');
@@ -120,7 +150,7 @@
             }, 1000);
         });
 
-        // --- HỆ THỐNG PHÁO HOA (Canvas) ---
+        // --- PHÁO HOA (Canvas) ---
         const canvas = document.getElementById('fireworks-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -134,9 +164,8 @@
             const colors = ['#ff0043', '#14fc56', '#1e7fff', '#e60aff', '#ffbf36', '#ffffff'];
             const color = colors[Math.floor(Math.random() * colors.length)];
             
-            // *** GỌI HÀM PHÁT FILE MP3 CỦA BẠN TẠI ĐÂY ***
-            // Delay một chút (300ms) để khớp với lúc pháo bung ra
-            setTimeout(() => AudioPlayer.play(), 300);
+            // CHỈ GỌI HÀM PHÁT NHẠC CỦA BẠN (Delay 200ms để khớp hình)
+            setTimeout(() => MyAudio.play(), 200);
 
             for (let i = 0; i < 60; i++) {
                 particles.push({
