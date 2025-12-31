@@ -1,47 +1,144 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <title>Happy New Year 2026</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+:root {
+    --neon-pink: #ff66c4;
+    --neon-purple: #ad00ff;
+    --bg-color: #0a0a0a;
+}
 
-    <div id="start-screen">
-        <h1 class="title">CHÚC MỪNG<br>NĂM MỚI</h1>
-        <p class="year">2026</p>
-        <button id="start-btn" onclick="startApp()">BẤM ĐỂ KHAI TIỆC 🎉</button>
-        <p class="hint">Bật loa để nghe tiếng pháo nổ nhé 🔊</p>
-    </div>
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-color);
+    overflow: hidden; /* Ngăn thanh cuộn */
+    font-family: 'Poppins', sans-serif;
+}
 
-    <div class="stage-container">
-        <canvas id="trails-canvas"></canvas>
-        <canvas id="main-canvas"></canvas>
-        <div id="wishes-layer"></div>
-        
-        <div class="controls">
-            <div class="btn-control" onclick="toggleSound()">Âm thanh: Bật/Tắt</div>
-        </div>
+/* --- CÁC MÀN HÌNH OVERLAY (Start, Intro) --- */
+.overlay-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    color: white;
+    transition: opacity 0.5s ease-out;
+}
 
-        <div class="hide">
-            <input class="shell-type" value="Random"> 
-            <input class="shell-size" value="2">
-            <input class="quality-ui" value="2">
-            <input class="sky-lighting" value="2">
-            <input class="scaleFactor" value="1">
-            <input type="checkbox" class="word-shell" checked>
-            <input type="checkbox" class="auto-launch" checked>
-            <input type="checkbox" class="finale-mode">
-            <input type="checkbox" class="hide-controls">
-            <input type="checkbox" class="fullscreen">
-            <input type="checkbox" class="long-exposure">
-        </div>
-    </div>
+.overlay-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
 
-    <script src="script.js"></script>
-</body>
-</html>
+/* Nút Start */
+#btn-start {
+    padding: 15px 40px;
+    font-size: 24px;
+    background: transparent;
+    color: var(--neon-pink);
+    border: 2px solid var(--neon-pink);
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 0 15px var(--neon-pink);
+    text-shadow: 0 0 10px var(--neon-pink);
+    transition: all 0.3s ease;
+}
+
+#btn-start:hover {
+    background: var(--neon-pink);
+    color: white;
+    box-shadow: 0 0 30px var(--neon-pink);
+}
+
+/* Chữ đếm ngược và HNY */
+#countdown-text {
+    font-family: 'Dancing Script', cursive;
+    font-size: 80px;
+    color: white;
+    text-shadow: 0 0 20px var(--neon-purple), 0 0 40px var(--neon-pink);
+    text-align: center;
+}
+
+/* --- MÀN HÌNH CHÍNH --- */
+#main-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1s ease-in;
+}
+
+#main-container.visible {
+    opacity: 1;
+}
+
+/* Canvas pháo hoa nằm dưới cùng */
+#fireworks-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+/* Lớp chứa các element bay nằm trên canvas */
+#floating-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none; /* Để chuột có thể tương tác với canvas bên dưới nếu cần */
+}
+
+/* --- STYLE CHO CÁC PHẦN TỬ BAY (Như ảnh 2) --- */
+.floating-element {
+    position: absolute;
+    bottom: -100px; /* Bắt đầu từ dưới màn hình */
+    padding: 10px 20px;
+    border-radius: 20px;
+    color: white;
+    font-size: 16px;
+    white-space: nowrap;
+    /* Hiệu ứng Neon */
+    border: 1px solid var(--neon-pink);
+    box-shadow: inset 0 0 10px var(--neon-pink), 0 0 10px var(--neon-pink);
+    text-shadow: 0 0 5px var(--neon-pink);
+    background: rgba(0, 0, 0, 0.5);
+    /* Animation */
+    animation-name: floatUp;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+}
+
+/* Style riêng cho ảnh bay */
+.floating-element.is-image {
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.3);
+}
+.floating-element img {
+    max-width: 150px;
+    border-radius: 15px;
+    display: block;
+}
+
+/* Keyframes cho chuyển động bay lên */
+@keyframes floatUp {
+    0% {
+        transform: translateY(0) scale(0.8);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-120vh) scale(1); /* Bay quá màn hình trên */
+        opacity: 0;
+    }
+}
