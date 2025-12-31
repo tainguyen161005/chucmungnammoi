@@ -65,7 +65,7 @@
         // Kiểm tra xem file có tồn tại không
         boomSound.src = AUDIO_FILE;
         boomSound.oncanplaythrough = () => {
-            document.getElementById('status-msg').innerText = "Đã tìm thấy file nhạc ✅ Sẵn sàng!";
+            document.getElementById('status-msg').innerText = "";
             document.getElementById('status-msg').style.color = "#00ff00";
             document.getElementById('btn-start').style.display = "block";
         };
