@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pháo Hoa 2026 - Dày Đặc & Mượt Mà</title>
+    <title>Pháo Hoa 2026 - Thứ Tự & An Toàn</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* --- GIAO DIỆN CHUNG --- */
@@ -22,35 +22,36 @@
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
         #floating-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
 
-        /* --- PHẦN TỬ BAY CHÍNH (ẢNH & CHỮ) --- */
+        /* --- PHẦN TỬ BAY --- */
         .floating-element { 
             position: absolute; 
             bottom: -400px; 
-            padding: 15px 25px; 
-            border-radius: 25px; 
-            font-size: 18px; 
+            padding: 15px 20px; 
+            border-radius: 20px; 
+            font-size: 17px; 
             font-weight: 600;
             color: white; 
             background: rgba(0, 0, 0, 0.85); 
             border: 2px solid var(--neon-pink); 
             box-shadow: 0 0 15px var(--neon-pink); 
             text-shadow: 0 0 2px black; 
-            width: 280px; 
+            
+            /* Kích thước giới hạn để không tràn lề */
+            width: 250px; 
             text-align: center; 
             white-space: normal; 
-            line-height: 1.5;
+            line-height: 1.4;
             
-            /* Tăng tốc độ bay lên 12s (cũ là 18s) để dọn chỗ nhanh hơn */
-            animation: floatUpMain 12s linear forwards; 
+            /* Bay lên trong 14 giây */
+            animation: floatUp 14s linear forwards; 
             
             opacity: 0;
             z-index: 20;
-            transform: translateX(-50%); /* Căn giữa tại điểm đặt */
         }
         
         .floating-element.is-image { 
             padding: 0; background: transparent; border: none; box-shadow: none; 
-            width: 220px; 
+            width: 200px; /* Ảnh nhỏ hơn chút để gọn */
         }
         
         .floating-element img { 
@@ -60,28 +61,11 @@
             box-shadow: 0 0 25px var(--neon-blue); 
             object-fit: cover;
         }
-
-        /* --- PHẦN TỬ PHỤ (ICON LẤP ĐẦY) --- */
-        .filler-icon {
-            position: absolute;
-            bottom: -100px;
-            font-size: 30px;
-            animation: floatUpFiller 8s linear forwards;
-            z-index: 15;
-            opacity: 0.8;
-            filter: drop-shadow(0 0 5px white);
-        }
         
-        @keyframes floatUpMain { 
+        @keyframes floatUp { 
             0% { bottom: -400px; opacity: 0; } 
             5% { opacity: 1; } 
             100% { bottom: 120%; opacity: 0; } 
-        }
-
-        @keyframes floatUpFiller {
-            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
         }
         
         #countdown-text { font-family: 'Dancing Script', cursive; font-size: 120px; text-shadow: 0 0 30px var(--neon-purple); text-align: center; }
@@ -122,8 +106,6 @@
             "2a1e3136-b5f2-4f83-b2a2-4e14ce44bc74.jpg",
             "2aca0a23-94ff-4cb8-bb98-8236b5468e60.jpg"
         ];
-
-        const icons = ["🌸", "🌼", "✨", "💖", "🦋", "🍀", "🧧", "🎉"];
 
         // --- 2. XỬ LÝ ÂM THANH ---
         const AUDIO_FILE = "tieng_phao_hoa_no-www_tiengdong_com.mp3";
@@ -203,50 +185,71 @@
             requestAnimationFrame(loop);
         }
 
-        // --- 4. HỆ THỐNG BAY NÂNG CAO (Lấp đầy khoảng trống) ---
+        // --- 4. HỆ THỐNG BAY CẢI TIẾN (Làn Đường An Toàn & Thứ Tự) ---
         
-        // Tạo Ảnh (Luôn ở 30%)
-        function spawnImage() {
-            if (images.length === 0) return;
-            const el = document.createElement('div');
-            el.className = 'floating-element is-image';
-            const img = document.createElement('img');
-            img.src = images[Math.floor(Math.random() * images.length)];
-            img.onerror = function() { el.remove(); };
-            el.appendChild(img);
-            el.style.left = '30%'; // Cố định
-            document.getElementById('floating-container').appendChild(el);
-            setTimeout(() => el.remove(), 13000); 
+        // Cấu hình 4 Làn đường an toàn (Đơn vị: % từ trái sang)
+        // 8%: Sát trái (nhưng vẫn cách lề một chút)
+        // 32%: Lệch trái
+        // 54%: Lệch phải
+        // 75%: Sát phải (với width 20% thì 75+20=95%, vẫn an toàn chưa chạm lề 100%)
+        const LANES = [8, 32, 54, 75]; 
+        
+        // Theo dõi trạng thái các làn (để không thả trùng)
+        let laneCooldowns = [0, 0, 0, 0];
+        
+        // Biến theo dõi thứ tự tin nhắn
+        let currentMessageIndex = 0;
+
+        function getSafeLane() {
+            const now = Date.now();
+            // Lọc ra các làn đang rảnh (thời gian hiện tại > thời gian mở khóa)
+            const availableIndices = LANES.map((pos, index) => index).filter(i => now > laneCooldowns[i]);
+            
+            if (availableIndices.length === 0) return null; // Tất cả đều bận
+            
+            // Chọn ngẫu nhiên 1 làn trong số các làn rảnh
+            const chosenIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            return { pos: LANES[chosenIndex], index: chosenIndex };
         }
 
-        // Tạo Chữ (Luôn ở 70%)
-        function spawnText() {
-            const el = document.createElement('div');
-            el.className = 'floating-element is-text';
-            el.innerText = messages[Math.floor(Math.random() * messages.length)];
-            el.style.color = Math.random() > 0.5 ? "#ff66c4" : "#00ffff";
-            el.style.borderColor = el.style.color;
-            el.style.left = '70%'; // Cố định
-            document.getElementById('floating-container').appendChild(el);
-            setTimeout(() => el.remove(), 13000);
-        }
+        function createFloating(forceType = null) {
+            // 1. Tìm làn đường trống
+            const laneInfo = getSafeLane();
+            if (!laneInfo) return; // Nếu kẹt đường thì bỏ qua lượt này
 
-        // Tạo Icon Lấp Đầy (Ngẫu nhiên ở các vùng trống)
-        function spawnFiller() {
+            // 2. Tạo phần tử
             const el = document.createElement('div');
-            el.className = 'filler-icon';
-            el.innerText = icons[Math.floor(Math.random() * icons.length)];
+            el.className = 'floating-element';
             
-            // Random vị trí để lấp vào chỗ trống (tránh vùng 30% và 70% ra một chút)
-            // Cho xuất hiện ở 10%, 50% (giữa), 90%
-            const positions = [10, 50, 90];
-            const chosenPos = positions[Math.floor(Math.random() * positions.length)];
+            let isImage;
+            if (forceType !== null) isImage = (forceType === 'image');
+            else isImage = Math.random() < 0.5 && images.length > 0;
+
+            if (isImage) {
+                // --- XỬ LÝ ẢNH (NGẪU NHIÊN) ---
+                el.classList.add('is-image');
+                const img = document.createElement('img');
+                img.src = images[Math.floor(Math.random() * images.length)];
+                img.onerror = function() { el.remove(); };
+                el.appendChild(img);
+            } else {
+                // --- XỬ LÝ CHỮ (THEO THỨ TỰ) ---
+                el.innerText = messages[currentMessageIndex];
+                el.style.color = Math.random() > 0.5 ? "#ff66c4" : "#00ffff";
+                el.style.borderColor = el.style.color;
+                
+                // Tăng thứ tự cho lần sau, nếu hết thì quay về 0
+                currentMessageIndex = (currentMessageIndex + 1) % messages.length;
+            }
+
+            // 3. Đặt vị trí
+            el.style.left = laneInfo.pos + '%';
             
-            // Thêm chút ngẫu nhiên nhỏ +/- 5%
-            el.style.left = (chosenPos + (Math.random() * 10 - 5)) + '%';
-            
+            // 4. Khóa làn đường này trong 5 giây (để người sau không đè lên)
+            laneCooldowns[laneInfo.index] = Date.now() + 5000;
+
             document.getElementById('floating-container').appendChild(el);
-            setTimeout(() => el.remove(), 9000);
+            setTimeout(() => el.remove(), 14000);
         }
 
         function startShow() {
@@ -254,22 +257,12 @@
             createFirework();
             setInterval(createFirework, 800); 
 
-            // --- LỊCH TRÌNH XUẤT HIỆN DÀY ĐẶC ---
-            
-            // 1. Luồng chính: Ảnh và Chữ xen kẽ nhanh (2 giây/lần)
-            // Vì tốc độ bay nhanh hơn (12s), nên 2s/lần là an toàn, không đè.
-            // 0s: Ảnh (trái)
-            // 2s: Chữ (phải)
-            // 4s: Ảnh (trái) -> Ảnh cũ đã bay được 33% màn hình, khoảng cách rất an toàn.
-            let toggle = true;
-            setInterval(() => {
-                if (toggle) spawnImage();
-                else spawnText();
-                toggle = !toggle;
-            }, 2000); 
+            // Ban đầu thả 2 cái cho vui
+            createFloating('image');
+            setTimeout(() => createFloating('text'), 1500);
 
-            // 2. Luồng phụ: Icon lấp đầy khoảng trống (1.5 giây/lần)
-            setInterval(spawnFiller, 1500);
+            // Cứ 2.5 giây thử thả một cái mới vào làn đường trống bất kỳ
+            setInterval(() => createFloating(), 2500); 
         }
     </script>
 </body>
