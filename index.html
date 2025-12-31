@@ -25,10 +25,19 @@
         #floating-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
 
         /* Phần tử bay */
-        .floating-element { position: absolute; bottom: -150px; padding: 10px 25px; border-radius: 30px; font-size: 22px; font-weight: bold; color: white; background: rgba(0, 0, 0, 0.5); border: 2px solid var(--neon-pink); box-shadow: 0 0 15px var(--neon-pink); text-shadow: 0 0 5px white; white-space: nowrap; animation: floatUp linear forwards; }
+        .floating-element { position: absolute; bottom: -250px; padding: 10px 25px; border-radius: 30px; font-size: 22px; font-weight: bold; color: white; background: rgba(0, 0, 0, 0.5); border: 2px solid var(--neon-pink); box-shadow: 0 0 15px var(--neon-pink); text-shadow: 0 0 5px white; white-space: nowrap; animation: floatUp linear forwards; }
         .floating-element.is-image { padding: 0; background: transparent; border: none; box-shadow: none; }
-        .floating-element img { width: 140px; border-radius: 15px; border: 2px solid var(--neon-blue); box-shadow: 0 0 20px var(--neon-blue); }
-        @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(-120vh) scale(1); opacity: 0; } }
+        
+        /* Chỉnh kích thước ảnh to rõ đẹp */
+        .floating-element img { 
+            width: 180px; height: auto; 
+            border-radius: 15px; 
+            border: 3px solid var(--neon-blue); 
+            box-shadow: 0 0 25px var(--neon-blue); 
+            object-fit: cover;
+        }
+        
+        @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(-130vh) scale(1); opacity: 0; } }
         
         #countdown-text { font-family: 'Dancing Script', cursive; font-size: 120px; text-shadow: 0 0 30px var(--neon-purple); }
         
@@ -39,8 +48,8 @@
 
     <div id="start-screen" class="overlay-screen">
         <h1 style="font-size: 40px; text-align: center;">CHÚC MỪNG NĂM MỚI 2026</h1>
-        <div id="status-msg">Đang tải file nhạc: tieng_phao_hoa_no-www_tiengdong_com.mp3 ...</div>
-        <button id="btn-start" style="display:none;">BẤM ĐỂ BẮT ĐẦU 🎆</button>
+        <div id="status-msg">Đang tải nhạc & ảnh...</div>
+        <button id="btn-start" style="display:none;">BẤM ĐỂ KHAI TIỆC 🎆</button>
     </div>
 
     <div id="intro-screen" class="overlay-screen hidden">
@@ -54,33 +63,37 @@
 
     <script>
         // --- 1. CẤU HÌNH DỮ LIỆU ---
-        const messages = ["Chúc mừng năm mới 2026! 🎆", "Vạn sự như ý ✨", "Tiền vào như nước 💰", "Sức khỏe dồi dào 💪", "Gia đình hạnh phúc ❤️", "Công danh thăng tiến 🚀", "An khang thịnh vượng 🧧"];
-        const images = ["https://cdn-icons-png.flaticon.com/512/3210/3210141.png", "https://cdn-icons-png.flaticon.com/512/3063/3063065.png"];
+        const messages = ["Chúc mừng năm mới 2026! 🎆", "Vạn sự như ý ✨", "Tiền vào như nước 💰", "Sức khỏe dồi dào 💪", "Gia đình hạnh phúc ❤️", "Công danh thăng tiến 🚀", "An khang thịnh vượng 🧧", "Xinh đẹp rạng ngời 😍"];
+        
+        // DANH SÁCH 6 ẢNH CỦA BẠN (Tên file chính xác)
+        const images = [
+            "5f0fcd1a-df75-43f3-b37b-e9b36a427b6f.jpg",
+            "da62a5c5-ce57-41f4-b46c-860e4e4c8028.jpg",
+            "0b03bf94-3577-429f-b5f5-4030ad496bf1.jpg",
+            "ce2b4df3-92bc-435b-b708-347100cbb956.jpg",
+            "2a1e3136-b5f2-4f83-b2a2-4e14ce44bc74.jpg",
+            "2aca0a23-94ff-4cb8-bb98-8236b5468e60.jpg"
+        ];
 
         // --- 2. XỬ LÝ ÂM THANH (CHỈ DÙNG FILE CỦA BẠN) ---
-        // Tên file chính xác bạn cung cấp
         const AUDIO_FILE = "tieng_phao_hoa_no-www_tiengdong_com.mp3";
         const boomSound = new Audio();
         
-        // Kiểm tra xem file có tồn tại không
         boomSound.src = AUDIO_FILE;
         boomSound.oncanplaythrough = () => {
-            document.getElementById('status-msg').innerText = "";
+            document.getElementById('status-msg').innerText = "Đã sẵn sàng! ✅";
             document.getElementById('status-msg').style.color = "#00ff00";
             document.getElementById('btn-start').style.display = "block";
         };
         boomSound.onerror = () => {
-            document.getElementById('status-msg').innerText = "LỖI: Không tìm thấy file 'tieng_phao_hoa_no-www_tiengdong_com.mp3'. Hãy kiểm tra lại thư mục!";
-            document.getElementById('status-msg').style.color = "red";
-            // Vẫn hiện nút start để chạy hình ảnh dù không có tiếng
+            document.getElementById('status-msg').innerText = "Lỗi: Không tìm thấy file nhạc. Vẫn có thể chạy hình ảnh.";
             document.getElementById('btn-start').style.display = "block";
         };
 
         function playMySound() {
-            // Clone node để cho phép nhiều tiếng nổ đè lên nhau
             const sound = boomSound.cloneNode();
-            sound.volume = 1.0; // Max volume
-            sound.play().catch(e => console.log("Chưa tương tác với web nên chưa phát được tiếng"));
+            sound.volume = 1.0; 
+            sound.play().catch(e => {});
         }
 
         // --- 3. LOGIC CHƯƠNG TRÌNH ---
@@ -91,10 +104,10 @@
         const countdownText = document.getElementById('countdown-text');
 
         startBtn.addEventListener('click', () => {
-            // Phát thử một tiếng cực nhỏ để trình duyệt cho phép âm thanh hoạt động
+            // Mồi âm thanh
             const unlockAudio = new Audio(AUDIO_FILE);
             unlockAudio.volume = 0.01;
-            unlockAudio.play();
+            unlockAudio.play().catch(e=>{});
 
             startScreen.classList.add('hidden');
             introScreen.classList.remove('hidden');
@@ -107,7 +120,7 @@
                 } else if (count === 0) {
                     countdownText.innerHTML = "HAPPY<br>NEW YEAR";
                     countdownText.style.fontSize = "80px";
-                    playMySound(); // Nổ bùm
+                    playMySound(); 
                 } else {
                     clearInterval(timer);
                     introScreen.classList.add('hidden');
@@ -131,7 +144,6 @@
             const colors = ['#ff0043', '#14fc56', '#1e7fff', '#e60aff', '#ffbf36', '#ffffff'];
             const color = colors[Math.floor(Math.random() * colors.length)];
             
-            // CHỈ GỌI FILE NHẠC CỦA BẠN - KHÔNG CÒN CÁI NÀO KHÁC
             setTimeout(() => playMySound(), 100);
 
             for (let i = 0; i < 70; i++) {
@@ -163,14 +175,16 @@
             requestAnimationFrame(loop);
         }
 
-        // --- 5. CHỮ VÀ ẢNH BAY ---
+        // --- 5. CHỮ VÀ ẢNH BAY (Đã cập nhật tỷ lệ xuất hiện ảnh) ---
         function createFloating() {
             const el = document.createElement('div');
             el.className = 'floating-element';
             
-            if (Math.random() < 0.3) {
+            // Tăng tỷ lệ xuất hiện ảnh lên 50% để thấy ảnh nhiều hơn
+            if (Math.random() < 0.5) {
                 el.classList.add('is-image');
                 const img = document.createElement('img');
+                // Lấy ngẫu nhiên 1 trong 6 ảnh
                 img.src = images[Math.floor(Math.random() * images.length)];
                 el.appendChild(img);
             } else {
@@ -179,16 +193,16 @@
                 el.style.borderColor = el.style.color;
             }
 
-            el.style.left = Math.random() * 80 + 10 + '%';
-            el.style.animationDuration = (Math.random() * 5 + 7) + 's';
+            el.style.left = Math.random() * 85 + 5 + '%'; // Tránh sát mép
+            el.style.animationDuration = (Math.random() * 5 + 10) + 's'; // Bay chậm 10-15s
             document.getElementById('floating-container').appendChild(el);
-            setTimeout(() => el.remove(), 12000);
+            setTimeout(() => el.remove(), 16000);
         }
 
         function startShow() {
             loop();
-            setInterval(createFirework, 1200); // Tốc độ bắn
-            setInterval(createFloating, 1500); // Tốc độ thả chữ
+            setInterval(createFirework, 1200); 
+            setInterval(createFloating, 1800); 
         }
     </script>
 </body>
