@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pháo Hoa 2026 - Fix Tuyệt Đối</title>
+    <title>Pháo Hoa 2026 - Căn Giữa An Toàn</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* --- GIAO DIỆN CHUNG --- */
@@ -25,10 +25,10 @@
         /* --- PHẦN TỬ BAY --- */
         .floating-element { 
             position: absolute; 
-            bottom: -450px; 
-            padding: 15px 20px; 
+            bottom: -400px; 
+            padding: 15px 25px; 
             border-radius: 25px; 
-            font-size: 17px; 
+            font-size: 18px; 
             font-weight: 600;
             color: white; 
             background: rgba(0, 0, 0, 0.85); 
@@ -36,29 +36,28 @@
             box-shadow: 0 0 15px var(--neon-pink); 
             text-shadow: 0 0 2px black; 
             
-            /* Giới hạn độ rộng để không quá to */
-            max-width: 280px; 
+            /* Kích thước gọn gàng */
+            width: 280px; 
+            
+            /* Canh giữa nội dung trong hộp */
+            text-align: center; 
+            
             white-space: normal; 
             line-height: 1.5;
             
-            /* Tốc độ bay: Cực kỳ ổn định (18s) */
+            /* Animation bay chậm (18s) */
             animation: floatUpSmooth 18s linear forwards; 
             opacity: 0;
             z-index: 20;
+            
+            /* QUAN TRỌNG: Dùng transform để căn giữa chính xác tại điểm đặt */
+            transform: translateX(-50%);
         }
         
-        /* CẤU HÌNH RIÊNG CHO ẢNH (BÊN TRÁI) */
+        /* CẤU HÌNH RIÊNG CHO ẢNH */
         .floating-element.is-image { 
             padding: 0; background: transparent; border: none; box-shadow: none; 
-            width: 180px; /* Ảnh rộng cố định 180px */
-            text-align: center;
-            /* Ảnh sẽ dùng thuộc tính LEFT */ 
-        }
-        
-        /* CẤU HÌNH RIÊNG CHO CHỮ (BÊN PHẢI) */
-        .floating-element.is-text {
-            /* Chữ sẽ dùng thuộc tính RIGHT để không bị tràn lề */
-            text-align: right; /* Canh lề chữ sang phải cho đẹp */
+            width: 220px; /* Ảnh rộng hơn chút cho đẹp */
         }
         
         .floating-element img { 
@@ -69,13 +68,10 @@
             object-fit: cover;
         }
         
-        /* Hiệu ứng bay lên */
         @keyframes floatUpSmooth { 
-            0% { transform: translateY(0) scale(0.9); opacity: 0; } 
+            0% { bottom: -400px; opacity: 0; } 
             5% { opacity: 1; } 
-            15% { transform: translateY(-15vh) scale(1); } 
-            85% { opacity: 1; }
-            100% { transform: translateY(-130vh) scale(1); opacity: 0; } 
+            100% { bottom: 120%; opacity: 0; } /* Bay vút lên trên màn hình */
         }
         
         #countdown-text { font-family: 'Dancing Script', cursive; font-size: 120px; text-shadow: 0 0 30px var(--neon-purple); text-align: center; }
@@ -195,11 +191,10 @@
             requestAnimationFrame(loop);
         }
 
-        // --- 4. HỆ THỐNG BAY: QUY HOẠCH LÀN ĐƯỜNG NGHIÊM NGẶT ---
+        // --- 4. HỆ THỐNG BAY CĂN GIỮA (CENTERED LANES) ---
         
-        // Hàm tạo ẢNH (Luôn ở bên TRÁI)
-        // positionMode: 0 = Sát lề trái, 1 = Gần giữa trái
-        function spawnImage(positionMode) {
+        // Hàm tạo ẢNH (Bên Trái nhưng gần giữa)
+        function spawnImage() {
             if (images.length === 0) return;
             const el = document.createElement('div');
             el.className = 'floating-element is-image';
@@ -209,19 +204,17 @@
             img.onerror = function() { el.remove(); };
             el.appendChild(img);
 
-            // CỐ ĐỊNH VỊ TRÍ LEFT
-            // Mode 0: Cách trái 5% (Sát viền nhưng không mất)
-            // Mode 1: Cách trái 25% (Không bao giờ chạm vào bên phải)
-            if (positionMode === 0) el.style.left = '5%';
-            else el.style.left = '25%';
+            // VỊ TRÍ CỐ ĐỊNH: 30% màn hình tính từ trái
+            // Kết hợp với transform: translateX(-50%) trong CSS, ảnh sẽ nằm chính giữa trục 30%
+            // Cách lề trái 30% là rất an toàn, không bị cắt.
+            el.style.left = '30%';
 
             document.getElementById('floating-container').appendChild(el);
-            setTimeout(() => el.remove(), 18000); // Xóa sau khi bay xong
+            setTimeout(() => el.remove(), 19000); 
         }
 
-        // Hàm tạo CHỮ (Luôn ở bên PHẢI)
-        // positionMode: 0 = Sát lề phải, 1 = Gần giữa phải
-        function spawnText(positionMode) {
+        // Hàm tạo CHỮ (Bên Phải nhưng gần giữa)
+        function spawnText() {
             const el = document.createElement('div');
             el.className = 'floating-element is-text';
             
@@ -229,14 +222,13 @@
             el.style.color = Math.random() > 0.5 ? "#ff66c4" : "#00ffff";
             el.style.borderColor = el.style.color;
 
-            // CỐ ĐỊNH VỊ TRÍ RIGHT (Tuyệt đối không dùng Left cho bên phải)
-            // Mode 0: Cách phải 5% (Sát viền phải nhưng an toàn)
-            // Mode 1: Cách phải 25% (Không chạm vào bên trái)
-            if (positionMode === 0) el.style.right = '5%';
-            else el.style.right = '25%';
+            // VỊ TRÍ CỐ ĐỊNH: 70% màn hình tính từ trái
+            // Kết hợp với transform: translateX(-50%), chữ sẽ nằm chính giữa trục 70%
+            // Cách lề phải 30% (100-70), rất an toàn.
+            el.style.left = '70%';
 
             document.getElementById('floating-container').appendChild(el);
-            setTimeout(() => el.remove(), 18000);
+            setTimeout(() => el.remove(), 19000);
         }
 
         function startShow() {
@@ -244,35 +236,28 @@
             createFirework();
             setInterval(createFirework, 800); 
 
-            // --- BỘ ĐIỀU KHIỂN NHỊP ĐIỆU ---
-            // Thay vì random, ta dùng một vòng lặp cố định (Cycle)
-            // Tổng chu kỳ: 12 giây. Mỗi lần gọi cách nhau 3 giây.
-            // Thứ tự: Ảnh Ngoài -> Chữ Ngoài -> Ảnh Trong -> Chữ Trong
-            // Vì thời gian bay là 18s, nên khi quay lại vị trí cũ thì cái trước đã bay rất xa rồi.
+            // --- QUY TRÌNH XUẤT HIỆN TUẦN TỰ (Sequential) ---
+            // Để tránh đè nhau, ta không cho xuất hiện cùng lúc mà so le.
             
-            let step = 0;
-            
-            // Gọi hàm này ngay lập tức
+            let toggle = true; // true = Ảnh, false = Chữ
+
             const runSequence = () => {
-                switch (step) {
-                    case 0:
-                        spawnImage(0); // Ảnh sát trái
-                        break;
-                    case 1:
-                        spawnText(0);  // Chữ sát phải
-                        break;
-                    case 2:
-                        spawnImage(1); // Ảnh gần giữa
-                        break;
-                    case 3:
-                        spawnText(1);  // Chữ gần giữa
-                        break;
+                if (toggle) {
+                    spawnImage(); // Tạo ảnh bên trái (30%)
+                } else {
+                    spawnText();  // Tạo chữ bên phải (70%)
                 }
-                step = (step + 1) % 4; // Quay vòng 0, 1, 2, 3 -> 0...
+                toggle = !toggle; // Đổi lượt
             };
 
-            runSequence(); // Chạy cái đầu tiên ngay
-            setInterval(runSequence, 3500); // Cứ 3.5 giây ra một cái mới
+            // Chạy cái đầu tiên ngay
+            runSequence();
+            
+            // Cứ 3.5 giây đổi lượt một lần
+            // 0s: Ảnh (30%)
+            // 3.5s: Chữ (70%)
+            // 7.0s: Ảnh (30%) -> Ảnh cũ đã bay được 7s rồi, cách rất xa.
+            setInterval(runSequence, 3500);
         }
     </script>
 </body>
