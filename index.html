@@ -3,29 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy New Year Celebration</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Happy New Year 2026 - Có Âm Thanh</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS GIAO DIỆN --- */
+        :root { --neon-pink: #ff66c4; --neon-purple: #ad00ff; --neon-blue: #00ffff; --bg-color: #050505; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: var(--bg-color); overflow: hidden; font-family: 'Poppins', sans-serif; color: white; }
+
+        /* Màn hình chờ */
+        .overlay-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; transition: opacity 0.5s; }
+        .overlay-screen.hidden { opacity: 0; pointer-events: none; }
+
+        /* Nút Start */
+        #btn-start { padding: 20px 50px; font-size: 28px; font-weight: bold; background: linear-gradient(45deg, #ff0043, #ff69b4); border: none; color: white; border-radius: 50px; cursor: pointer; box-shadow: 0 0 30px #ff0043; font-family: 'Dancing Script', cursive; animation: pulse 1s infinite; margin-top: 20px; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* Màn hình chính */
+        #main-container { position: relative; width: 100%; height: 100%; opacity: 0; transition: opacity 1s; }
+        #main-container.visible { opacity: 1; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        #floating-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+
+        /* Phần tử bay */
+        .floating-element { position: absolute; bottom: -150px; padding: 10px 25px; border-radius: 30px; font-size: 22px; font-weight: bold; color: white; background: rgba(0, 0, 0, 0.5); border: 2px solid var(--neon-pink); box-shadow: 0 0 15px var(--neon-pink); text-shadow: 0 0 5px white; white-space: nowrap; animation: floatUp linear forwards; }
+        .floating-element.is-image { padding: 0; background: transparent; border: none; box-shadow: none; }
+        .floating-element img { width: 140px; border-radius: 15px; border: 2px solid var(--neon-blue); box-shadow: 0 0 20px var(--neon-blue); }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(-120vh) scale(1); opacity: 0; } }
+        
+        #countdown-text { font-family: 'Dancing Script', cursive; font-size: 120px; text-shadow: 0 0 30px var(--neon-purple); }
+    </style>
 </head>
 <body>
 
     <div id="start-screen" class="overlay-screen">
-        <button id="btn-start">START </button>
+        <h1 style="font-size: 40px; text-align: center;">CHÚC MỪNG NĂM MỚI 2026</h1>
+        <p style="color: #aaa; margin-top: 10px;">(Vui lòng bật loa)</p>
+        <button id="btn-start">BẤM ĐỂ BẮT ĐẦU 🔊</button>
     </div>
 
     <div id="intro-screen" class="overlay-screen hidden">
-        <div id="countdown-text"></div>
+        <div id="countdown-text">3</div>
     </div>
 
-    <div id="main-container" class="hidden">
+    <div id="main-container">
         <canvas id="fireworks-canvas"></canvas>
-        
         <div id="floating-container"></div>
     </div>
 
-    <audio id="audio-launch" src="launch.mp3" preload="auto"></audio>
-    <audio id="audio-explode" src="explode.mp3" preload="auto"></audio>
+    <script>
+        // --- CẤU HÌNH ---
+        const messages = ["Chúc mừng năm mới 2026! 🎆", "Vạn sự như ý ✨", "Tiền vào như nước 💰", "Sức khỏe dồi dào 💪", "Gia đình hạnh phúc ❤️", "Công danh thăng tiến 🚀", "An khang thịnh vượng 🧧"];
+        const images = ["https://cdn-icons-png.flaticon.com/512/3210/3210141.png", "https://cdn-icons-png.flaticon.com/512/3063/3063065.png"];
 
-    <script src="script.js"></script>
+        // --- BỘ TẠO ÂM THANH (Đã chỉnh to hơn) ---
+        const Sound = (function() {
+            let ctx = null;
+            
+            function init() {
+                if (!ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    ctx = new AudioContext();
+                }
+                if (ctx.state === 'suspended') ctx.resume();
+            }
+
+            // Tiếng nổ "Bùm" (Trầm và vang)
+            function playBoom() {
+                if (!ctx) return;
+                const t = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'triangle'; // Dùng sóng tam giác cho tiếng nổ rền hơn
+                osc.frequency.setValueAtTime(150, t);
+                osc.frequency.exponentialRampToValueAtTime(0.01, t + 0.5);
+                
+                gain.gain.setValueAtTime(1.0, t); // Âm lượng tối đa (1.0)
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(t + 0.5);
+            }
+
+            // Tiếng rít "Viúuu" (Cao và sắc)
+            function playWhistle() {
+                if (!ctx) return;
+                const t = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(200, t);
+                osc.frequency.linearRampToValueAtTime(800, t + 0.3); // Tăng tần số nhanh
+                
+                gain.gain.setValueAtTime(0.3, t); // Âm lượng vừa phải
+                gain.gain.linearRampToValueAtTime(0, t + 0.3);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(t + 0.3);
+            }
+
+            return { init, playBoom, playWhistle };
+        })();
+
+        // --- XỬ LÝ SỰ KIỆN ---
+        const startBtn = document.getElementById('btn-start');
+        const startScreen = document.getElementById('start-screen');
+        const introScreen = document.getElementById('intro-screen');
+        const mainContainer = document.getElementById('main-container');
+        const countdownText = document.getElementById('countdown-text');
+
+        startBtn.addEventListener('click', () => {
+            Sound.init(); // Kích hoạt loa ngay lập tức
+            Sound.playWhistle(); // Phát tiếng thử
+            
+            startScreen.classList.add('hidden');
+            introScreen.classList.remove('hidden');
+
+            let count = 3;
+            const timer = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownText.innerText = count;
+                    Sound.playWhistle();
+                } else if (count === 0) {
+                    countdownText.innerHTML = "HAPPY<br>NEW YEAR";
+                    countdownText.style.fontSize = "80px";
+                    Sound.playBoom(); // Nổ bùm khi hết giờ
+                } else {
+                    clearInterval(timer);
+                    introScreen.classList.add('hidden');
+                    mainContainer.classList.add('visible');
+                    startShow();
+                }
+            }, 1000);
+        });
+
+        // --- PHÁO HOA (Canvas) ---
+        const canvas = document.getElementById('fireworks-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+
+        function createFirework() {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height * 0.6;
+            const colors = ['#ff0043', '#14fc56', '#1e7fff', '#e60aff', '#ffbf36', '#ffffff'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Phát âm thanh khi tạo pháo
+            Sound.playWhistle();
+            setTimeout(() => Sound.playBoom(), 200);
+
+            for (let i = 0; i < 60; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.5) * 12,
+                    alpha: 1, color: color,
+                    decay: Math.random() * 0.015 + 0.015
+                });
+            }
+        }
+
+        function loop() {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = 'lighter';
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.alpha -= p.decay;
+                
+                ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2); 
+                ctx.fillStyle = p.color; ctx.globalAlpha = p.alpha; ctx.fill();
+
+                if (p.alpha <= 0) particles.splice(i, 1);
+            }
+            requestAnimationFrame(loop);
+        }
+
+        // --- CHỮ BAY ---
+        function createFloating() {
+            const el = document.createElement('div');
+            el.className = 'floating-element';
+            
+            if (Math.random() < 0.3) {
+                el.classList.add('is-image');
+                const img = document.createElement('img');
+                img.src = images[Math.floor(Math.random() * images.length)];
+                el.appendChild(img);
+            } else {
+                el.innerText = messages[Math.floor(Math.random() * messages.length)];
+                el.style.color = Math.random() > 0.5 ? "#ff66c4" : "#00ffff";
+                el.style.borderColor = el.style.color;
+            }
+
+            el.style.left = Math.random() * 80 + 10 + '%';
+            el.style.animationDuration = (Math.random() * 5 + 7) + 's';
+            document.getElementById('floating-container').appendChild(el);
+            setTimeout(() => el.remove(), 12000);
+        }
+
+        function startShow() {
+            loop();
+            setInterval(createFirework, 1000); // 1 giây bắn 1 quả
+            setInterval(createFloating, 1500); // 1.5 giây bay 1 chữ
+        }
+    </script>
 </body>
 </html>
