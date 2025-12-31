@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pháo Hoa 2026 - Ảnh Trái Chữ Phải</title>
+    <title>Pháo Hoa 2026 - Không Trùng Lặp</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* --- GIAO DIỆN CHUNG --- */
@@ -22,22 +22,21 @@
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
         #floating-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
 
-        /* --- PHẦN TỬ BAY (CHỮ/ẢNH) --- */
+        /* --- PHẦN TỬ BAY --- */
         .floating-element { 
             position: absolute; 
-            bottom: -350px;
+            bottom: -400px; /* Hạ thấp hơn để không bị giật mình */
             padding: 15px 20px; 
             border-radius: 25px; 
             font-size: 18px; 
             font-weight: 600;
             color: white; 
-            background: rgba(0, 0, 0, 0.75); 
+            background: rgba(0, 0, 0, 0.8); /* Nền đậm hơn để che pháo hoa phía sau chữ */
             border: 2px solid var(--neon-pink); 
             box-shadow: 0 0 15px var(--neon-pink); 
             text-shadow: 0 0 2px black; 
-            max-width: 320px; 
             
-            /* THAY ĐỔI: Căn lề phải cho chữ vì nó sẽ nằm bên phải */
+            max-width: 300px; /* Giới hạn chiều rộng chữ */
             text-align: right; 
             
             white-space: normal; 
@@ -47,14 +46,13 @@
             z-index: 20;
         }
         
-        /* Ảnh thì reset lại padding và border */
         .floating-element.is-image { 
             padding: 0; 
             background: transparent; 
             border: none; 
             box-shadow: none; 
             max-width: none; 
-            text-align: center; /* Ảnh thì căn giữa hộp của nó */
+            text-align: center; 
         }
         
         .floating-element img { 
@@ -69,7 +67,7 @@
             0% { transform: translateY(0) scale(0.8); opacity: 0; } 
             10% { opacity: 1; transform: translateY(-15vh) scale(1); } 
             80% { opacity: 1; }
-            100% { transform: translateY(-120vh) scale(1); opacity: 0; } 
+            100% { transform: translateY(-130vh) scale(1); opacity: 0; } 
         }
         
         #countdown-text { font-family: 'Dancing Script', cursive; font-size: 120px; text-shadow: 0 0 30px var(--neon-purple); text-align: center; }
@@ -111,7 +109,7 @@
             "2aca0a23-94ff-4cb8-bb98-8236b5468e60.jpg"
         ];
 
-        // --- 2. XỬ LÝ ÂM THANH & LOGIC START GAME (Giữ nguyên) ---
+        // --- 2. XỬ LÝ ÂM THANH ---
         const AUDIO_FILE = "tieng_phao_hoa_no-www_tiengdong_com.mp3";
         const boomSound = new Audio();
         boomSound.src = AUDIO_FILE;
@@ -144,7 +142,7 @@
             }, 1000);
         });
 
-        // --- 3. ENGINE PHÁO HOA (Giữ nguyên) ---
+        // --- 3. ENGINE PHÁO HOA ---
         const canvas = document.getElementById('fireworks-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -189,46 +187,77 @@
             requestAnimationFrame(loop);
         }
 
-        // --- 4. HỆ THỐNG BAY (ĐÃ SỬA LỖI ĐÈ NHAU TRIỆT ĐỂ) ---
+        // --- 4. HỆ THỐNG BAY PHÂN LÀN (LANE SYSTEM - FIX CHỒNG LẤP) ---
         
-        function createFloating(forceType = null) {
-            const el = document.createElement('div');
-            el.className = 'floating-element';
+        // Cấu hình các "Làn đường" cố định (đơn vị: % chiều rộng màn hình)
+        // Ảnh ở bên trái: 2 làn
+        const IMAGE_LANES = [10, 35]; 
+        // Chữ ở bên phải: 2 làn
+        const TEXT_LANES = [65, 85]; 
+
+        // Theo dõi thời gian làn đường được giải phóng
+        const laneAvailability = {
+            'img_0': 0, 'img_1': 0,
+            'txt_0': 0, 'txt_1': 0
+        };
+
+        function getFreeLane(type) {
+            const now = Date.now();
+            let availableLanes = [];
             
-            // Quyết định là Ảnh hay Chữ
+            if (type === 'image') {
+                if (now > laneAvailability['img_0']) availableLanes.push({id: 'img_0', pos: IMAGE_LANES[0]});
+                if (now > laneAvailability['img_1']) availableLanes.push({id: 'img_1', pos: IMAGE_LANES[1]});
+            } else {
+                if (now > laneAvailability['txt_0']) availableLanes.push({id: 'txt_0', pos: TEXT_LANES[0]});
+                if (now > laneAvailability['txt_1']) availableLanes.push({id: 'txt_1', pos: TEXT_LANES[1]});
+            }
+
+            if (availableLanes.length === 0) return null; // Không có làn nào trống
+            
+            // Chọn ngẫu nhiên 1 làn trống
+            const chosen = availableLanes[Math.floor(Math.random() * availableLanes.length)];
+            return chosen;
+        }
+
+        function createFloating(forceType = null) {
+            // 1. Xác định loại (Ảnh hay Chữ)
             let isImage;
             if (forceType !== null) { isImage = forceType === 'image'; } 
             else { isImage = Math.random() < 0.5 && images.length > 0; }
 
-            let minRange, maxRange;
+            // 2. Tìm làn đường trống (QUAN TRỌNG)
+            const laneInfo = getFreeLane(isImage ? 'image' : 'text');
+            
+            // Nếu đường tắc (các làn đều đang có phần tử bay), thì HỦY, không tạo nữa để tránh đè.
+            if (!laneInfo) return; 
 
+            // 3. Khóa làn đường này lại trong 6 giây (6000ms)
+            // Nghĩa là trong 6s tới, không ai được đi vào làn này nữa -> Đảm bảo khoảng cách dọc
+            laneAvailability[laneInfo.id] = Date.now() + 6000;
+
+            // 4. Tạo phần tử DOM
+            const el = document.createElement('div');
+            el.className = 'floating-element';
+            
             if (isImage) {
-                // --- LÀ ẢNH: BẮT BUỘC Ở BÊN TRÁI ---
                 el.classList.add('is-image');
                 const img = document.createElement('img');
                 img.src = images[Math.floor(Math.random() * images.length)];
                 img.onerror = function() { el.remove(); };
                 el.appendChild(img);
-                
-                // Vùng trái: từ 5% đến 40% chiều rộng màn hình
-                minRange = 5; maxRange = 40;
-
             } else {
-                // --- LÀ CHỮ: BẮT BUỘC Ở BÊN PHẢI ---
                 el.innerText = messages[Math.floor(Math.random() * messages.length)];
                 el.style.color = Math.random() > 0.5 ? "#ff66c4" : "#00ffff";
                 el.style.borderColor = el.style.color;
-
-                // Vùng phải: từ 55% đến 90% chiều rộng màn hình
-                minRange = 55; maxRange = 90;
             }
 
-            // Chọn vị trí ngẫu nhiên trong vùng đã định
-            const leftPos = Math.random() * (maxRange - minRange) + minRange;
-            el.style.left = leftPos + '%';
+            // 5. Đặt vị trí theo làn đã chọn (cộng thêm chút ngẫu nhiên nhỏ +/- 2% cho tự nhiên)
+            const jitter = (Math.random() * 4) - 2; 
+            el.style.left = (laneInfo.pos + jitter) + '%';
             
-            // Thời gian bay ngẫu nhiên
-            const duration = (Math.random() * 6 + 12);
+            // 6. Tốc độ bay
+            const duration = (Math.random() * 5 + 15); // Bay chậm (15-20s)
             el.style.animationDuration = duration + 's'; 
             
             document.getElementById('floating-container').appendChild(el);
@@ -239,13 +268,14 @@
             loop();
             createFirework();
             
-            // Xuất hiện ngay 1 cặp Ảnh-Chữ khi bắt đầu
-            createFloating('image'); // Tự động sang trái
-            createFloating('text');  // Tự động sang phải
+            // Lúc đầu tạo ngay 1 ảnh làn 1 và 1 chữ làn 1
+            createFloating('image'); 
+            createFloating('text');
 
             setInterval(createFirework, 800); 
-            // Cứ 2.5s tạo ngẫu nhiên 1 cái (hàm sẽ tự lo vị trí)
-            setInterval(() => createFloating(), 2500); 
+            // Thử tạo phần tử mới mỗi 2 giây. 
+            // Hệ thống Lane sẽ tự động từ chối nếu quá dày đặc.
+            setInterval(() => createFloating(), 2000); 
         }
     </script>
 </body>
