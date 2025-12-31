@@ -1,0 +1,421 @@
+/* =========================================
+   THƯ VIỆN HỖ TRỢ (Fscreen, Ticker, Stage, MyMath)
+   ========================================= */
+(function(global){"use strict";var key={fullscreenEnabled:0,fullscreenElement:1,requestFullscreen:2,exitFullscreen:3,fullscreenchange:4,fullscreenerror:5};var webkit=["webkitFullscreenEnabled","webkitFullscreenElement","webkitRequestFullscreen","webkitExitFullscreen","webkitfullscreenchange","webkitfullscreenerror"];var moz=["mozFullScreenEnabled","mozFullScreenElement","mozRequestFullScreen","mozCancelFullScreen","mozfullscreenchange","mozfullscreenerror"];var ms=["msFullscreenEnabled","msFullscreenElement","msRequestFullscreen","msExitFullscreen","MSFullscreenChange","MSFullscreenError"];var doc=typeof window!=="undefined"&&typeof window.document!=="undefined"?window.document:{};var vendor=("fullscreenEnabled"in doc&&Object.keys(key))||(webkit[0]in doc&&webkit)||(moz[0]in doc&&moz)||(ms[0]in doc&&ms)||[];var fscreen={requestFullscreen:function requestFullscreen(element){return element[vendor[key.requestFullscreen]]()},requestFullscreenFunction:function requestFullscreenFunction(element){return element[vendor[key.requestFullscreen]]},get exitFullscreen(){return doc[vendor[key.exitFullscreen]].bind(doc)},addEventListener:function addEventListener(type,handler,options){return doc.addEventListener(vendor[key[type]],handler,options)},removeEventListener:function removeEventListener(type,handler){return doc.removeEventListener(vendor[key[type]],handler)},get fullscreenEnabled(){return Boolean(doc[vendor[key.fullscreenEnabled]])},set fullscreenEnabled(val){},get fullscreenElement(){return doc[vendor[key.fullscreenElement]]},set fullscreenElement(val){},get onfullscreenchange(){return doc[("on"+vendor[key.fullscreenchange]).toLowerCase()]},set onfullscreenchange(handler){return doc[("on"+vendor[key.fullscreenchange]).toLowerCase()]=handler},get onfullscreenerror(){return doc[("on"+vendor[key.fullscreenerror]).toLowerCase()]},set onfullscreenerror(handler){return doc[("on"+vendor[key.fullscreenerror]).toLowerCase()]=handler}};global.fscreen=fscreen})(window);
+const Ticker=(function(window){"use strict";const Ticker={};Ticker.addListener=function addListener(callback){if(typeof callback!=="function")throw"Ticker.addListener() requires a function reference passed for a callback.";listeners.push(callback);if(!started){started=true;queueFrame()}};let started=false;let lastTimestamp=0;let listeners=[];function queueFrame(){if(window.requestAnimationFrame){requestAnimationFrame(frameHandler)}else{webkitRequestAnimationFrame(frameHandler)}}function frameHandler(timestamp){let frameTime=timestamp-lastTimestamp;lastTimestamp=timestamp;if(frameTime<0){frameTime=17}else if(frameTime>68){frameTime=68}listeners.forEach(listener=>listener.call(window,frameTime,frameTime/16.6667));queueFrame()}return Ticker})(window);
+const Stage=(function(window,document,Ticker){"use strict";let lastTouchTimestamp=0;function Stage(canvas){if(typeof canvas==="string")canvas=document.getElementById(canvas);this.canvas=canvas;this.ctx=canvas.getContext("2d");this.canvas.style.touchAction="none";this.speed=1;this.dpr=Stage.disableHighDPI?1:(window.devicePixelRatio||1)/(this.ctx.backingStorePixelRatio||1);this.width=canvas.width;this.height=canvas.height;this.naturalWidth=this.width*this.dpr;this.naturalHeight=this.height*this.dpr;if(this.width!==this.naturalWidth){this.canvas.width=this.naturalWidth;this.canvas.height=this.naturalHeight;this.canvas.style.width=this.width+"px";this.canvas.style.height=this.height+"px"}Stage.stages.push(this);this._listeners={resize:[],pointerstart:[],pointermove:[],pointerend:[],lastPointerPos:{x:0,y:0}}}Stage.stages=[];Stage.disableHighDPI=false;Stage.prototype.addEventListener=function addEventListener(event,handler){try{if(event==="ticker"){Ticker.addListener(handler)}else{this._listeners[event].push(handler)}}catch(e){throw"Invalid Event"}};Stage.prototype.dispatchEvent=function dispatchEvent(event,val){const listeners=this._listeners[event];if(listeners){listeners.forEach(listener=>listener.call(this,val))}else{throw"Invalid Event"}};Stage.prototype.resize=function resize(w,h){this.width=w;this.height=h;this.naturalWidth=w*this.dpr;this.naturalHeight=h*this.dpr;this.canvas.width=this.naturalWidth;this.canvas.height=this.naturalHeight;this.canvas.style.width=w+"px";this.canvas.style.height=h+"px";this.dispatchEvent("resize")};Stage.windowToCanvas=function windowToCanvas(canvas,x,y){const bbox=canvas.getBoundingClientRect();return{x:(x-bbox.left)*(canvas.width/bbox.width),y:(y-bbox.top)*(canvas.height/bbox.height)}};Stage.mouseHandler=function mouseHandler(evt){if(Date.now()-lastTouchTimestamp<500){return}let type="start";if(evt.type==="mousemove"){type="move"}else if(evt.type==="mouseup"){type="end"}Stage.stages.forEach(stage=>{const pos=Stage.windowToCanvas(stage.canvas,evt.clientX,evt.clientY);stage.pointerEvent(type,pos.x/stage.dpr,pos.y/stage.dpr)})};Stage.touchHandler=function touchHandler(evt){lastTouchTimestamp=Date.now();let type="start";if(evt.type==="touchmove"){type="move"}else if(evt.type==="touchend"){type="end"}Stage.stages.forEach(stage=>{for(let touch of Array.from(evt.changedTouches)){let pos;if(type!=="end"){pos=Stage.windowToCanvas(stage.canvas,touch.clientX,touch.clientY);stage._listeners.lastPointerPos=pos;if(type==="start")stage.pointerEvent("move",pos.x/stage.dpr,pos.y/stage.dpr)}else{pos=stage._listeners.lastPointerPos}stage.pointerEvent(type,pos.x/stage.dpr,pos.y/stage.dpr)}})};Stage.prototype.pointerEvent=function pointerEvent(type,x,y){const evt={type:type,x:x,y:y};evt.onCanvas=x>=0&&x<=this.width&&y>=0&&y<=this.height;this.dispatchEvent("pointer"+type,evt)};document.addEventListener("mousedown",Stage.mouseHandler);document.addEventListener("mousemove",Stage.mouseHandler);document.addEventListener("mouseup",Stage.mouseHandler);document.addEventListener("touchstart",Stage.touchHandler);document.addEventListener("touchmove",Stage.touchHandler);document.addEventListener("touchend",Stage.touchHandler);return Stage})(window,document,Ticker);
+const MyMath=(function(Math){const MyMath={};MyMath.toDeg=180/Math.PI;MyMath.toRad=Math.PI/180;MyMath.halfPI=Math.PI/2;MyMath.twoPI=Math.PI*2;MyMath.dist=(width,height)=>{return Math.sqrt(width*width+height*height)};MyMath.pointDist=(x1,y1,x2,y2)=>{const distX=x2-x1;const distY=y2-y1;return Math.sqrt(distX*distX+distY*distY)};MyMath.angle=(width,height)=>MyMath.halfPI+Math.atan2(height,width);MyMath.pointAngle=(x1,y1,x2,y2)=>MyMath.halfPI+Math.atan2(y2-y1,x2-x1);MyMath.splitVector=(speed,angle)=>({x:Math.sin(angle)*speed,y:-Math.cos(angle)*speed});MyMath.random=(min,max)=>Math.random()*(max-min)+min;MyMath.randomInt=(min,max)=>((Math.random()*(max-min+1))|0)+min;MyMath.randomChoice=function randomChoice(choices){if(arguments.length===1&&Array.isArray(choices)){return choices[(Math.random()*choices.length)|0]}return arguments[(Math.random()*arguments.length)|0]};MyMath.clamp=function clamp(num,min,max){return Math.min(Math.max(num,min),max)};MyMath.literalLattice=function(text,density=3,fontFamily="Georgia",fontSize="60px"){var dots=[];var canvas=document.createElement("canvas");var ctx=canvas.getContext("2d");var font=`${fontSize} ${fontFamily}`;ctx.font=font;var width=ctx.measureText(text).width;var fSize=parseInt(fontSize.match(/(\d+)px/)[1]);canvas.width=width+20;canvas.height=fSize+20;ctx.font=font;ctx.fillText(text,10,fSize+10);var imageData=ctx.getImageData(0,0,canvas.width,canvas.height);for(var y=0;y<imageData.height;y+=density){for(var x=0;x<imageData.width;x+=density){var i=(y*imageData.width+x)*4;if(imageData.data[i+3]>0){dots.push({x:x,y:y})}}}return{width:canvas.width,height:canvas.height,points:dots}};return MyMath})(Math);
+
+/* =========================================
+   HỆ THỐNG ÂM THANH (Synthesizer)
+   ========================================= */
+const SoundSynth = (function() {
+    let ctx = null;
+    let enabled = false;
+
+    function init() {
+        if (!ctx) {
+            ctx = new (window.AudioContext || window.webkitAudioContext)();
+            enabled = true;
+        }
+        if (ctx.state === 'suspended') {
+            ctx.resume();
+        }
+    }
+
+    function toggle() {
+        enabled = !enabled;
+        if(enabled && !ctx) init();
+    }
+
+    function playBurst() {
+        if (!enabled || !ctx) return;
+        const t = ctx.currentTime;
+        const bufferSize = ctx.sampleRate * 0.5; 
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(800, t);
+        filter.frequency.exponentialRampToValueAtTime(100, t + 0.3);
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.5, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start();
+    }
+
+    function playLift() {
+        if (!enabled || !ctx) return;
+        const t = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.frequency.setValueAtTime(200, t);
+        osc.frequency.exponentialRampToValueAtTime(600, t + 0.4);
+        
+        gain.gain.setValueAtTime(0.05, t);
+        gain.gain.linearRampToValueAtTime(0, t + 0.4);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(t + 0.5);
+    }
+
+    return { init, toggle, playBurst, playLift };
+})();
+
+/* =========================================
+   LOGIC CHÍNH
+   ========================================= */
+const IS_MOBILE = window.innerWidth <= 640;
+const IS_DESKTOP = window.innerWidth > 800;
+const GRAVITY = 0.9; 
+let simSpeed = 1;
+
+let stageW, stageH;
+let quality = 1;
+const QUALITY_LOW = 1, QUALITY_NORMAL = 2, QUALITY_HIGH = 3;
+const COLOR = { Red: "#ff0043", Green: "#14fc56", Blue: "#1e7fff", Purple: "#e60aff", Gold: "#ffbf36", White: "#ffffff" };
+const INVISIBLE = "_INVISIBLE_";
+const PI_2 = Math.PI * 2;
+
+const trailsStage = new Stage("trails-canvas");
+const mainStage = new Stage("main-canvas");
+const stages = [trailsStage, mainStage];
+
+// Cấu hình chữ pháo hoa
+const randomWords = ["HAPPY", "NEW", "YEAR", "2026", "TẾT", "XUÂN"];
+const wordDotsMap = {};
+randomWords.forEach(word => {
+    wordDotsMap[word] = MyMath.literalLattice(word, 3, "Arial", "80px");
+});
+
+const store = {
+    state: {
+        paused: true,
+        config: {
+            quality: "2",
+            shell: "Random",
+            size: IS_DESKTOP ? "3" : "2",
+            wordShell: true,
+            autoLaunch: true,
+            finale: false,
+            skyLighting: "2",
+            hideControls: false,
+            longExposure: false,
+            scaleFactor: IS_MOBILE ? 0.9 : 1,
+        },
+    },
+    setState(nextState) {
+        this.state = Object.assign({}, this.state, nextState);
+        configDidUpdate();
+    }
+};
+
+function configDidUpdate() {
+    const config = store.state.config;
+    quality = +config.quality;
+    Spark.drawWidth = quality === 3 ? 0.75 : 1;
+}
+
+// Shell & Star Logic
+const shellTypes = {
+    Random: randomShell,
+    Crysanthemum: crysanthemumShell,
+    Willow: willowShell,
+    Crackle: crackleShell,
+    "Horse Tail": horsetailShell,
+};
+const shellNames = Object.keys(shellTypes);
+
+function randomShellName() { return Math.random() < 0.5 ? "Crysanthemum" : shellNames[(Math.random() * (shellNames.length - 1) + 1) | 0]; }
+function randomShell(size) { return shellTypes[randomShellName()](size); }
+function shellFromConfig(size) { return shellTypes[store.state.config.shell](size); }
+
+function crysanthemumShell(size=1) {
+    const color = Math.random()<0.7 ? {limitWhite:true} : [randomColor(), randomColor({notSame:true})];
+    return { shellSize:size, spreadSize:300+size*100, starLife:900+size*200, starDensity:1.2, color: randomColor(color), glitter:"light" };
+}
+function willowShell(size=1) {
+    return { shellSize:size, spreadSize:300+size*100, starDensity:0.6, starLife:3000+size*300, glitter:"willow", color: INVISIBLE };
+}
+function crackleShell(size=1) {
+    return { shellSize:size, spreadSize:380+size*75, starDensity:1, starLife:600+size*100, glitter:"light", color: COLOR.Gold, crackle:true };
+}
+function horsetailShell(size=1) {
+    return { shellSize:size, horsetail:true, color:randomColor(), spreadSize:250+size*38, starDensity:0.9, starLife:2500+size*300, glitter:"medium" };
+}
+
+function createParticleCollection() {
+    const collection = {};
+    const COLOR_CODES_W_INVIS = [...Object.values(COLOR), INVISIBLE];
+    COLOR_CODES_W_INVIS.forEach(color => collection[color] = []);
+    return collection;
+}
+
+const Star = {
+    active: createParticleCollection(),
+    _pool: [],
+    _new() { return {}; },
+    add(x, y, color, angle, speed, life, speedOffX, speedOffY) {
+        const instance = this._pool.pop() || this._new();
+        instance.visible = true; instance.heavy = false;
+        instance.x = x; instance.y = y; instance.prevX = x; instance.prevY = y;
+        instance.color = color; instance.speedX = Math.sin(angle) * speed + (speedOffX || 0); instance.speedY = Math.cos(angle) * speed + (speedOffY || 0);
+        instance.life = life; instance.fullLife = life; instance.spinAngle = Math.random() * PI_2; instance.spinSpeed = 0.8;
+        this.active[color].push(instance); return instance;
+    },
+    returnInstance(instance) { instance.onDeath && instance.onDeath(instance); instance.onDeath = null; this._pool.push(instance); }
+};
+
+const Spark = {
+    drawWidth: 0, airDrag: 0.9, active: createParticleCollection(), _pool: [], _new() { return {}; },
+    add(x, y, color, angle, speed, life) {
+        const instance = this._pool.pop() || this._new();
+        instance.x = x; instance.y = y; instance.prevX = x; instance.prevY = y; instance.color = color;
+        instance.speedX = Math.sin(angle) * speed; instance.speedY = Math.cos(angle) * speed; instance.life = life;
+        this.active[color].push(instance); return instance;
+    },
+    returnInstance(instance) { this._pool.push(instance); }
+};
+
+class Shell {
+    constructor(options) {
+        Object.assign(this, options);
+        this.starLifeVariation = options.starLifeVariation || 0.125;
+        this.color = options.color || randomColor();
+        this.glitterColor = options.glitterColor || this.color;
+        if (!this.starCount) {
+            const density = options.starDensity || 1;
+            const scaledSize = this.spreadSize / 54;
+            this.starCount = Math.max(6, scaledSize * scaledSize * density);
+        }
+    }
+    launch(position, launchHeight) {
+        const width = stageW; const height = stageH; const hpad = 60; const vpad = 50;
+        const minHeight = height - height * 0.45;
+        const launchX = position * (width - hpad * 2) + hpad; const launchY = height;
+        const burstY = minHeight - launchHeight * (minHeight - vpad);
+        const launchDistance = launchY - burstY;
+        const launchVelocity = Math.pow(launchDistance * 0.04, 0.64);
+        const comet = (this.comet = Star.add(launchX, launchY, typeof this.color === "string" && this.color !== "random" ? this.color : COLOR.White, Math.PI, launchVelocity * (this.horsetail ? 1.2 : 1), launchVelocity * (this.horsetail ? 100 : 400)));
+        comet.heavy = true; comet.spinRadius = MyMath.random(0.32, 0.85); comet.sparkFreq = 32 / quality;
+        
+        // PHÁT TIẾNG RÍT
+        SoundSynth.playLift();
+
+        comet.onDeath = (comet) => this.burst(comet.x, comet.y);
+    }
+    burst(x, y) {
+        const speed = this.spreadSize / 96;
+        let color, sparkFreq, sparkSpeed, sparkLife;
+        if (this.glitter === "light") { sparkFreq = 400; sparkSpeed = 0.3; sparkLife = 300; }
+        else if (this.glitter === "willow") { sparkFreq = 120; sparkSpeed = 0.34; sparkLife = 1400; }
+        sparkFreq = sparkFreq / quality;
+
+        // PHÁT TIẾNG NỔ
+        SoundSynth.playBurst();
+
+        const starFactory = (angle, speedMult) => {
+            const star = Star.add(x, y, color || randomColor(), angle, speedMult * speed, this.starLife + Math.random() * this.starLife * this.starLifeVariation, this.horsetail ? this.comet && this.comet.speedX : 0, this.horsetail ? this.comet && this.comet.speedY : -this.spreadSize / 1800);
+            if (this.glitter) { star.sparkFreq = sparkFreq; star.sparkSpeed = sparkSpeed; star.sparkLife = sparkLife; star.sparkColor = this.glitterColor; }
+        };
+
+        const dotStarFactory = (point, color) => {
+             Spark.add(point.x, point.y, color, Math.random() * 2 * Math.PI, Math.pow(Math.random(), 0.15) * 0.4, 2000);
+        };
+
+        if (typeof this.color === "string") {
+            if (this.color === "random") color = null; else color = this.color;
+            createBurst(this.starCount, starFactory);
+        }
+
+        if (store.state.config.wordShell && Math.random() < 0.2) {
+             createWordBurst(MyMath.randomChoice(randomWords), dotStarFactory, x, y);
+        }
+    }
+}
+
+// Helpers
+function randomColor(options) { return Object.values(COLOR)[(Math.random() * Object.keys(COLOR).length) | 0]; }
+function createBurst(count, particleFactory, startAngle=0, arcLength=PI_2) {
+    const R = 0.5 * Math.sqrt(count / Math.PI); const C = 2 * R * Math.PI; const C_HALF = C / 2;
+    for (let i = 0; i <= C_HALF; i++) {
+        const ringAngle = (i / C_HALF) * PI_HALF; const ringSize = Math.cos(ringAngle); const partsPerFullRing = C * ringSize; const partsPerArc = partsPerFullRing * (arcLength / PI_2);
+        const angleInc = PI_2 / partsPerFullRing; const angleOffset = Math.random() * angleInc + startAngle;
+        for (let i = 0; i < partsPerArc; i++) { particleFactory(angleInc * i + angleOffset, ringSize); }
+    }
+}
+function createWordBurst(word, particleFactory, cx, cy) {
+    const map = wordDotsMap[word];
+    if (!map) return;
+    const dx = map.width / 2; const dy = map.height / 2; const color = randomColor();
+    for (let i = 0; i < map.points.length; i++) {
+        particleFactory({ x: cx + (map.points[i].x - dx), y: cy + (map.points[i].y - dy) }, color);
+    }
+}
+
+// ===== LỜI CHÚC BAY =====
+const WISHES = [
+    "Năm mới An Khang Thịnh Vượng 🎆", "Vạn Sự Như Ý ❤️", "Tiền vào như nước 💰", 
+    "Sức khỏe dồi dào 💪", "Gia đình hạnh phúc 👨‍👩‍👧‍👦", "Công danh thăng tiến 🚀",
+    "May mắn ngập tràn 🍀", "Happy New Year 2026 🎉"
+];
+// Danh sách ảnh mẫu (Thay link ảnh của bạn vào đây)
+const IMAGES = [
+    "https://cdn-icons-png.flaticon.com/512/3210/3210141.png", // Mèo thần tài
+    "https://cdn-icons-png.flaticon.com/512/3063/3063065.png"  // Bánh chưng
+];
+
+function spawnWish() {
+    if (store.state.paused) return;
+    const layer = document.getElementById("wishes-layer");
+    if(!layer) return;
+    
+    // Random: 70% ra chữ, 30% ra ảnh
+    const isImage = Math.random() < 0.3;
+    const el = document.createElement(isImage ? "img" : "div");
+    
+    if (isImage) {
+        el.className = "wish-image";
+        el.src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
+    } else {
+        el.className = "wish-text";
+        el.innerText = WISHES[Math.floor(Math.random() * WISHES.length)];
+        const colors = ["#ff9ad9", "#00ffff", "#ffff00", "#00ff00"];
+        el.style.color = colors[Math.floor(Math.random() * colors.length)];
+        el.style.textShadow = `0 0 10px ${el.style.color}`;
+        el.style.borderColor = el.style.color;
+    }
+
+    el.style.left = (10 + Math.random() * 80) + "%";
+    el.style.animationDuration = (7 + Math.random() * 5) + "s"; // Bay chậm 7-12s
+    
+    layer.appendChild(el);
+    setTimeout(() => el.remove(), 12000);
+}
+
+// ===== MAIN LOOP =====
+function update(frameTime, lag) {
+    if (store.state.paused) return;
+    const width = stageW; const height = stageH; const timeStep = frameTime * simSpeed; const speed = simSpeed * lag;
+    
+    // Auto Launch
+    if (store.state.config.autoLaunch) {
+        if (Math.random() < 0.04) { 
+            const shell = new Shell(shellFromConfig(store.state.config.size));
+            shell.launch(Math.random(), Math.random() < 0.5 ? 0.6 : 0.8);
+        }
+    }
+
+    // Update Particles
+    const gAcc = timeStep / 1000 * GRAVITY;
+    const COLOR_CODES = Object.values(COLOR);
+    COLOR_CODES.forEach(color => {
+        const stars = Star.active[color];
+        for (let i = stars.length - 1; i >= 0; i--) {
+            const star = stars[i]; star.life -= timeStep;
+            if (star.life <= 0) { stars.splice(i, 1); Star.returnInstance(star); }
+            else {
+                star.prevX = star.x; star.prevY = star.y; star.x += star.speedX * speed; star.y += star.speedY * speed;
+                star.speedY += gAcc;
+                if (star.sparkFreq) {
+                    star.sparkTimer -= timeStep;
+                    while (star.sparkTimer < 0) {
+                        star.sparkTimer += star.sparkFreq;
+                        Spark.add(star.x, star.y, star.sparkColor, Math.random() * PI_2, Math.random() * star.sparkSpeed, star.sparkLife);
+                    }
+                }
+            }
+        }
+        const sparks = Spark.active[color];
+        for (let i = sparks.length - 1; i >= 0; i--) {
+            const spark = sparks[i]; spark.life -= timeStep;
+            if (spark.life <= 0) { sparks.splice(i, 1); Spark.returnInstance(spark); }
+            else {
+                spark.prevX = spark.x; spark.prevY = spark.y; spark.x += spark.speedX * speed; spark.y += spark.speedY * speed;
+                spark.speedX *= Spark.airDrag; spark.speedY *= Spark.airDrag; spark.speedY += gAcc;
+            }
+        }
+    });
+    
+    render(speed);
+}
+
+function render(speed) {
+    const { dpr } = mainStage; const width = stageW; const height = stageH;
+    const trailsCtx = trailsStage.ctx; const mainCtx = mainStage.ctx;
+    
+    trailsCtx.scale(dpr, dpr); mainCtx.scale(dpr, dpr);
+    trailsCtx.globalCompositeOperation = "source-over";
+    trailsCtx.fillStyle = `rgba(0, 0, 0, ${store.state.config.longExposure ? 0.0025 : 0.15 * speed})`;
+    trailsCtx.fillRect(0, 0, width, height);
+    mainCtx.clearRect(0, 0, width, height);
+
+    trailsCtx.globalCompositeOperation = "lighten";
+    trailsCtx.lineWidth = 2;
+    Object.values(COLOR).forEach(color => {
+        const stars = Star.active[color];
+        trailsCtx.strokeStyle = color; trailsCtx.beginPath();
+        stars.forEach(star => { trailsCtx.moveTo(star.x, star.y); trailsCtx.lineTo(star.prevX, star.prevY); });
+        trailsCtx.stroke();
+        
+        const sparks = Spark.active[color];
+        trailsCtx.strokeStyle = color; trailsCtx.beginPath();
+        sparks.forEach(spark => { trailsCtx.moveTo(spark.x, spark.y); trailsCtx.lineTo(spark.prevX, spark.prevY); });
+        trailsCtx.stroke();
+    });
+    
+    trailsCtx.setTransform(1, 0, 0, 1, 0, 0); mainCtx.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+function handleResize() {
+    const w = window.innerWidth; const h = window.innerHeight;
+    appNodes.stageContainer.style.width = w + "px"; appNodes.stageContainer.style.height = h + "px";
+    stages.forEach(stage => stage.resize(w, h));
+    stageW = w; stageH = h;
+}
+
+// Nodes
+const appNodes = {
+    stageContainer: document.querySelector(".stage-container"),
+};
+
+// Start App
+window.addEventListener("resize", handleResize);
+handleResize();
+configDidUpdate();
+mainStage.addEventListener("ticker", update);
+
+function startApp() {
+    SoundSynth.init(); 
+    document.getElementById("start-screen").style.opacity = 0;
+    setTimeout(() => { document.getElementById("start-screen").style.display = "none"; }, 800);
+    store.state.paused = false;
+    setInterval(spawnWish, 1500);
+}
+
+function toggleSound() {
+    SoundSynth.toggle();
+    document.getElementById('btn-sound').innerText = `Âm thanh: ${SoundSynth.enabled ? 'BẬT' : 'TẮT'}`;
+}
+
+// Click to shoot
+mainStage.addEventListener("pointerstart", (e) => {
+    const shell = new Shell(shellFromConfig(store.state.config.size));
+    shell.launch(e.x / mainStage.width, 1 - e.y / mainStage.height);
+});
+</script>
+</body>
+</html>
