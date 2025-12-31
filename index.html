@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pháo Hoa 2026 - Căn Giữa</title>
+    <title>Pháo Hoa 2026 - No Overlap</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* --- GIAO DIỆN --- */
@@ -31,21 +31,22 @@
         /* Phần tử bay (Chữ/Ảnh) - ĐÃ CĂN CHỈNH LẠI */
         .floating-element { 
             position: absolute; 
-            bottom: -250px; 
-            padding: 10px 25px; 
-            border-radius: 30px; 
-            font-size: 22px; 
-            font-weight: bold; 
+            bottom: -300px; /* Hạ thấp vị trí xuất phát hơn chút vì nội dung dài */
+            padding: 12px 20px; 
+            border-radius: 25px; 
+            font-size: 18px; /* Giảm size chữ chút để câu dài trông đẹp hơn */
+            font-weight: 600;
             color: white; 
-            background: rgba(0, 0, 0, 0.5); 
+            background: rgba(0, 0, 0, 0.6); 
             border: 2px solid var(--neon-pink); 
             box-shadow: 0 0 15px var(--neon-pink); 
-            text-shadow: 0 0 5px white; 
+            text-shadow: 0 0 2px black; 
             
-            /* Giới hạn chiều rộng để không bị tràn lề nếu chữ dài */
-            max-width: 400px; 
+            /* Giới hạn chiều rộng hẹp hơn để tránh va chạm */
+            max-width: 320px; 
             text-align: center; 
             white-space: normal; /* Cho phép xuống dòng */
+            line-height: 1.4;
             
             animation: floatUp linear forwards; 
         }
@@ -60,7 +61,7 @@
             object-fit: cover;
         }
         
-        @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(-130vh) scale(1); opacity: 0; } }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-130vh) scale(1); opacity: 0; } }
         
         #countdown-text { font-family: 'Dancing Script', cursive; font-size: 120px; text-shadow: 0 0 30px var(--neon-purple); text-align: center; }
         
@@ -85,9 +86,16 @@
     </div>
 
     <script>
-        // --- 1. CẤU HÌNH DỮ LIỆU ---
-        const messages = ["Chúc mừng năm mới 2026! 🎆", "Vạn sự như ý ✨", "Tiền vào như nước 💰", "Sức khỏe dồi dào 💪", "Gia đình hạnh phúc ❤️", "Công danh thăng tiến 🚀", "An khang thịnh vượng 🧧", "Xinh đẹp rạng ngời 😍"];
+        // --- 1. CẤU HÌNH DỮ LIỆU MỚI ---
+        const messages = [
+            "Chúc bạn năm mới luôn vui vẻ và cười thật nhiều nha 😄✨",
+            "Bỏ qua hết những muộn phiền tiêu cực không vui ở lại năm cũ nè 🗑️👋",
+            "Chỉ cần tâm hồn mình là nắng, thì ngày giông bão cũng hóa trời xanh 🌞🌈",
+            "Nguyện cho bạn mỗi ngày đều giản đơn, ngẩng đầu lên đều dịu dàng, ấm áp ☕🌸",
+            "Sẽ không có cái nắng nào chói chang bằng được nụ cười của bạn 😁💖"
+        ];
         
+        // LƯU Ý: Bạn cần đảm bảo các file ảnh này nằm cùng thư mục với file HTML
         const images = [
             "5f0fcd1a-df75-43f3-b37b-e9b36a427b6f.jpg",
             "da62a5c5-ce57-41f4-b46c-860e4e4c8028.jpg",
@@ -260,12 +268,22 @@
             requestAnimationFrame(loop);
         }
 
-        // --- 5. CHỮ VÀ ẢNH BAY (ĐÃ CẬP NHẬT VỊ TRÍ) ---
-        function createFloating() {
+        // --- 5. CHỮ VÀ ẢNH BAY (ĐÃ CẬP NHẬT LOGIC CHỐNG ĐÈ) ---
+        
+        // Hàm tạo mới nhận thêm tham số forceType (ép kiểu ảnh/chữ) và zone (khu vực)
+        function createFloating(forceType = null, zone = 'random') {
             const el = document.createElement('div');
             el.className = 'floating-element';
             
-            if (Math.random() < 0.5 && images.length > 0) {
+            // Xác định loại (Ảnh hay Chữ)
+            let isImage;
+            if (forceType !== null) {
+                isImage = forceType === 'image';
+            } else {
+                isImage = Math.random() < 0.5 && images.length > 0;
+            }
+
+            if (isImage) {
                 el.classList.add('is-image');
                 const img = document.createElement('img');
                 img.src = images[Math.floor(Math.random() * images.length)];
@@ -277,26 +295,38 @@
                 el.style.borderColor = el.style.color;
             }
 
-            // [QUAN TRỌNG] Điều chỉnh vị trí xuất hiện:
-            // Chỉ random từ 25% đến 75% chiều rộng màn hình.
-            // Điều này đảm bảo nội dung luôn ở khu vực giữa.
-            el.style.left = Math.random() * 50 + 25 + '%'; 
+            // Xử lý vị trí (Kỹ thuật phân vùng để tránh đè nhau)
+            let leftPos;
+            if (zone === 'left') {
+                 // Vùng trái: 25% -> 45%
+                 leftPos = Math.random() * 20 + 25;
+            } else if (zone === 'right') {
+                 // Vùng phải: 55% -> 75%
+                 leftPos = Math.random() * 20 + 55;
+            } else {
+                // Ngẫu nhiên chuẩn: 25% -> 75%
+                leftPos = Math.random() * 50 + 25;
+            }
+            el.style.left = leftPos + '%';
             
-            el.style.animationDuration = (Math.random() * 5 + 10) + 's'; 
+            el.style.animationDuration = (Math.random() * 5 + 12) + 's'; 
             document.getElementById('floating-container').appendChild(el);
             setTimeout(() => el.remove(), 17000);
         }
 
         function startShow() {
             loop();
-            // Bắn ngay lập tức
+            // Bắn phát đầu tiên
             createFirework();
-            createFloating(); 
-            setTimeout(createFloating, 1200);
+            
+            // YÊU CẦU MỚI: Xuất hiện cùng lúc 1 Ảnh và 1 Chữ, không đè nhau
+            // Ép buộc 1 ảnh bên trái, 1 chữ bên phải ngay lập tức
+            createFloating('image', 'left');
+            createFloating('text', 'right');
 
-            // Cài đặt lặp lại
+            // Cài đặt lặp lại cho các lần sau (quay về chế độ ngẫu nhiên)
             setInterval(createFirework, 800); 
-            setInterval(createFloating, 2500); 
+            setInterval(() => createFloating(null, 'random'), 2500); 
         }
     </script>
 </body>
