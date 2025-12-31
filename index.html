@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy New Year 2026 - Có Âm Thanh</title>
+    <title>Happy New Year 2026</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* --- CSS GIAO DIỆN --- */
@@ -37,8 +37,8 @@
 
     <div id="start-screen" class="overlay-screen">
         <h1 style="font-size: 40px; text-align: center;">CHÚC MỪNG NĂM MỚI 2026</h1>
-        <p style="color: #aaa; margin-top: 10px;">(Vui lòng bật loa)</p>
-        <button id="btn-start">BẤM ĐỂ BẮT ĐẦU 🔊</button>
+        <p style="color: #aaa; margin-top: 10px;">(Đã cập nhật âm thanh pháo hoa thực tế)</p>
+        <button id="btn-start">BẤM ĐỂ BẮT ĐẦU 🎆</button>
     </div>
 
     <div id="intro-screen" class="overlay-screen hidden">
@@ -51,63 +51,38 @@
     </div>
 
     <script>
-        // --- CẤU HÌNH ---
+        // --- CẤU HÌNH DỮ LIỆU ---
         const messages = ["Chúc mừng năm mới 2026! 🎆", "Vạn sự như ý ✨", "Tiền vào như nước 💰", "Sức khỏe dồi dào 💪", "Gia đình hạnh phúc ❤️", "Công danh thăng tiến 🚀", "An khang thịnh vượng 🧧"];
+        // Bạn có thể thay link ảnh khác vào đây
         const images = ["https://cdn-icons-png.flaticon.com/512/3210/3210141.png", "https://cdn-icons-png.flaticon.com/512/3063/3063065.png"];
 
-        // --- BỘ TẠO ÂM THANH (Đã chỉnh to hơn) ---
-        const Sound = (function() {
-            let ctx = null;
+        // --- QUẢN LÝ ÂM THANH (Sử dụng file MP3 của bạn) ---
+        const AudioPlayer = (function() {
+            // Tên file nhạc bạn cung cấp
+            const src = 'tieng_phao_hoa_no-www_tiengdong_com.mp3';
             
-            function init() {
-                if (!ctx) {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    ctx = new AudioContext();
-                }
-                if (ctx.state === 'suspended') ctx.resume();
+            // Tạo sẵn một đối tượng Audio để preload
+            const masterAudio = new Audio(src);
+            masterAudio.preload = 'auto';
+
+            function play() {
+                // Clone (nhân bản) audio để có thể phát nhiều tiếng nổ chồng lên nhau
+                // Nếu không clone, tiếng sau sẽ ngắt tiếng trước
+                const sound = masterAudio.cloneNode();
+                sound.volume = 0.8; // Âm lượng (0.0 đến 1.0)
+                
+                // Phát nhạc và xử lý lỗi nếu trình duyệt chặn
+                sound.play().catch(error => {
+                    console.log("Trình duyệt chặn tự động phát, cần tương tác người dùng.");
+                });
+                
+                // Tự động xóa node sau khi phát xong để giải phóng bộ nhớ
+                sound.onended = function() {
+                    this.remove();
+                };
             }
 
-            // Tiếng nổ "Bùm" (Trầm và vang)
-            function playBoom() {
-                if (!ctx) return;
-                const t = ctx.currentTime;
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                
-                osc.type = 'triangle'; // Dùng sóng tam giác cho tiếng nổ rền hơn
-                osc.frequency.setValueAtTime(150, t);
-                osc.frequency.exponentialRampToValueAtTime(0.01, t + 0.5);
-                
-                gain.gain.setValueAtTime(1.0, t); // Âm lượng tối đa (1.0)
-                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-                
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(t + 0.5);
-            }
-
-            // Tiếng rít "Viúuu" (Cao và sắc)
-            function playWhistle() {
-                if (!ctx) return;
-                const t = ctx.currentTime;
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(200, t);
-                osc.frequency.linearRampToValueAtTime(800, t + 0.3); // Tăng tần số nhanh
-                
-                gain.gain.setValueAtTime(0.3, t); // Âm lượng vừa phải
-                gain.gain.linearRampToValueAtTime(0, t + 0.3);
-                
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(t + 0.3);
-            }
-
-            return { init, playBoom, playWhistle };
+            return { play };
         })();
 
         // --- XỬ LÝ SỰ KIỆN ---
@@ -118,9 +93,12 @@
         const countdownText = document.getElementById('countdown-text');
 
         startBtn.addEventListener('click', () => {
-            Sound.init(); // Kích hoạt loa ngay lập tức
-            Sound.playWhistle(); // Phát tiếng thử
-            
+            // Phát thử một tiếng để "mồi" trình duyệt cấp quyền
+            // (Âm lượng 0 để người dùng không nghe thấy tiếng mồi này)
+            const dummy = new Audio('tieng_phao_hoa_no-www_tiengdong_com.mp3');
+            dummy.volume = 0;
+            dummy.play().then(() => dummy.pause());
+
             startScreen.classList.add('hidden');
             introScreen.classList.remove('hidden');
 
@@ -129,11 +107,10 @@
                 count--;
                 if (count > 0) {
                     countdownText.innerText = count;
-                    Sound.playWhistle();
                 } else if (count === 0) {
                     countdownText.innerHTML = "HAPPY<br>NEW YEAR";
                     countdownText.style.fontSize = "80px";
-                    Sound.playBoom(); // Nổ bùm khi hết giờ
+                    AudioPlayer.play(); // Nổ bùm ngay khi chúc mừng
                 } else {
                     clearInterval(timer);
                     introScreen.classList.add('hidden');
@@ -143,7 +120,7 @@
             }, 1000);
         });
 
-        // --- PHÁO HOA (Canvas) ---
+        // --- HỆ THỐNG PHÁO HOA (Canvas) ---
         const canvas = document.getElementById('fireworks-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -157,9 +134,9 @@
             const colors = ['#ff0043', '#14fc56', '#1e7fff', '#e60aff', '#ffbf36', '#ffffff'];
             const color = colors[Math.floor(Math.random() * colors.length)];
             
-            // Phát âm thanh khi tạo pháo
-            Sound.playWhistle();
-            setTimeout(() => Sound.playBoom(), 200);
+            // *** GỌI HÀM PHÁT FILE MP3 CỦA BẠN TẠI ĐÂY ***
+            // Delay một chút (300ms) để khớp với lúc pháo bung ra
+            setTimeout(() => AudioPlayer.play(), 300);
 
             for (let i = 0; i < 60; i++) {
                 particles.push({
@@ -190,7 +167,7 @@
             requestAnimationFrame(loop);
         }
 
-        // --- CHỮ BAY ---
+        // --- HỆ THỐNG CHỮ/ẢNH BAY ---
         function createFloating() {
             const el = document.createElement('div');
             el.className = 'floating-element';
