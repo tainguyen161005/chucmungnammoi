@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pháo Hoa 2026 - No Overlap</title>
+    <title>Pháo Hoa 2026 - Perfect Version</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        /* --- GIAO DIỆN --- */
+        /* --- 1. GIAO DIỆN CHUNG --- */
         :root { --neon-pink: #ff66c4; --neon-purple: #ad00ff; --neon-blue: #00ffff; --bg-color: #000000; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: var(--bg-color); overflow: hidden; font-family: 'Poppins', sans-serif; color: white; }
 
@@ -28,27 +28,31 @@
         }
         #floating-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
 
-        /* Phần tử bay (Chữ/Ảnh) - ĐÃ CĂN CHỈNH LẠI */
+        /* --- 2. PHẦN TỬ BAY (CHỮ/ẢNH) --- */
         .floating-element { 
             position: absolute; 
-            bottom: -300px; /* Hạ thấp vị trí xuất phát hơn chút vì nội dung dài */
-            padding: 12px 20px; 
+            bottom: -350px; /* Bắt đầu từ dưới màn hình */
+            padding: 15px 20px; 
             border-radius: 25px; 
-            font-size: 18px; /* Giảm size chữ chút để câu dài trông đẹp hơn */
+            font-size: 18px; 
             font-weight: 600;
             color: white; 
-            background: rgba(0, 0, 0, 0.6); 
+            /* Nền tối bán trong suốt để chữ dễ đọc */
+            background: rgba(0, 0, 0, 0.75); 
             border: 2px solid var(--neon-pink); 
             box-shadow: 0 0 15px var(--neon-pink); 
             text-shadow: 0 0 2px black; 
             
-            /* Giới hạn chiều rộng hẹp hơn để tránh va chạm */
+            /* Giới hạn chiều rộng */
             max-width: 320px; 
             text-align: center; 
-            white-space: normal; /* Cho phép xuống dòng */
-            line-height: 1.4;
+            white-space: normal; 
+            line-height: 1.5;
             
-            animation: floatUp linear forwards; 
+            /* Animation bay lên */
+            animation: floatUpSmooth linear forwards; 
+            opacity: 0;
+            z-index: 20; /* Luôn nằm trên pháo hoa */
         }
         
         .floating-element.is-image { padding: 0; background: transparent; border: none; box-shadow: none; max-width: none; }
@@ -61,10 +65,15 @@
             object-fit: cover;
         }
         
-        @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-130vh) scale(1); opacity: 0; } }
+        /* Hiệu ứng bay lên mượt mà */
+        @keyframes floatUpSmooth { 
+            0% { transform: translateY(0) scale(0.8); opacity: 0; } 
+            10% { opacity: 1; transform: translateY(-15vh) scale(1); } 
+            80% { opacity: 1; }
+            100% { transform: translateY(-120vh) scale(1); opacity: 0; } 
+        }
         
         #countdown-text { font-family: 'Dancing Script', cursive; font-size: 120px; text-shadow: 0 0 30px var(--neon-purple); text-align: center; }
-        
         #status-msg { margin-top: 15px; font-size: 14px; color: yellow; }
     </style>
 </head>
@@ -73,7 +82,7 @@
     <div id="start-screen" class="overlay-screen">
         <h1 style="font-size: 40px; text-align: center;">CHÚC MỪNG NĂM MỚI 2026</h1>
         <div id="status-msg">Đang tải tài nguyên...</div>
-        <button id="btn-start" style="display:none;">BẮN PHÁO HOA 🎆</button>
+        <button id="btn-start" style="display:none;">KHAI TIỆC PHÁO HOA 🎆</button>
     </div>
 
     <div id="intro-screen" class="overlay-screen hidden">
@@ -86,7 +95,7 @@
     </div>
 
     <script>
-        // --- 1. CẤU HÌNH DỮ LIỆU MỚI ---
+        // --- 1. DỮ LIỆU CỦA BẠN ---
         const messages = [
             "Chúc bạn năm mới luôn vui vẻ và cười thật nhiều nha 😄✨",
             "Bỏ qua hết những muộn phiền tiêu cực không vui ở lại năm cũ nè 🗑️👋",
@@ -95,7 +104,7 @@
             "Sẽ không có cái nắng nào chói chang bằng được nụ cười của bạn 😁💖"
         ];
         
-        // LƯU Ý: Bạn cần đảm bảo các file ảnh này nằm cùng thư mục với file HTML
+        // Danh sách ảnh (đảm bảo file nằm cùng thư mục)
         const images = [
             "5f0fcd1a-df75-43f3-b37b-e9b36a427b6f.jpg",
             "da62a5c5-ce57-41f4-b46c-860e4e4c8028.jpg",
@@ -126,7 +135,7 @@
             sound.play().catch(e => {});
         }
 
-        // --- 3. LOGIC CHƯƠNG TRÌNH ---
+        // --- 3. LOGIC START GAME ---
         const startBtn = document.getElementById('btn-start');
         const startScreen = document.getElementById('start-screen');
         const introScreen = document.getElementById('intro-screen');
@@ -134,6 +143,7 @@
         const countdownText = document.getElementById('countdown-text');
 
         startBtn.addEventListener('click', () => {
+            // Mồi âm thanh
             const unlockAudio = new Audio(AUDIO_FILE);
             unlockAudio.volume = 0.01;
             unlockAudio.play().catch(e=>{});
@@ -159,7 +169,7 @@
             }, 1000);
         });
 
-        // --- 4. HỆ THỐNG PHÁO HOA ---
+        // --- 4. ENGINE PHÁO HOA ---
         const canvas = document.getElementById('fireworks-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -192,18 +202,13 @@
             update() {
                 this.prevX = this.x;
                 this.prevY = this.y;
-                
                 this.vx *= this.friction;
                 this.vy *= this.friction;
                 this.vy += this.gravity; 
-
                 this.x += this.vx;
                 this.y += this.vy;
                 this.alpha -= this.decay;
-
-                if (this.type === 'willow' && Math.random() < 0.2) {
-                     this.alpha = Math.random(); 
-                }
+                if (this.type === 'willow' && Math.random() < 0.2) { this.alpha = Math.random(); }
             }
 
             draw(ctx) {
@@ -216,12 +221,10 @@
                 ctx.lineWidth = this.lineWidth;
                 ctx.lineCap = 'round';
                 ctx.stroke();
-                
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.lineWidth/2, 0, Math.PI*2);
                 ctx.fillStyle = 'white';
                 ctx.fill();
-                
                 ctx.restore();
             }
         }
@@ -229,29 +232,13 @@
         function createFirework() {
             const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
             const y = Math.random() * canvas.height * 0.5 + canvas.height * 0.1;
-            
             const rand = Math.random();
             let type, color, count;
-
-            if (rand < 0.5) {
-                type = 'willow';
-                color = 'hsl(' + Math.floor(Math.random() * 40 + 20) + ', 100%, 60%)'; 
-                count = 180; 
-            } else if (rand < 0.8) {
-                type = 'burst';
-                color = 'hsl(' + Math.floor(Math.random() * 60 + 180) + ', 100%, 70%)'; 
-                count = 120;
-            } else {
-                type = 'burst';
-                color = '#ffffff';
-                count = 100;
-            }
-            
+            if (rand < 0.5) { type = 'willow'; color = 'hsl(' + Math.floor(Math.random() * 40 + 20) + ', 100%, 60%)'; count = 180; } 
+            else if (rand < 0.8) { type = 'burst'; color = 'hsl(' + Math.floor(Math.random() * 60 + 180) + ', 100%, 70%)'; count = 120; } 
+            else { type = 'burst'; color = '#ffffff'; count = 100; }
             setTimeout(() => playMySound(), 100);
-
-            for (let i = 0; i < count; i++) {
-                particles.push(new Particle(x, y, color, type));
-            }
+            for (let i = 0; i < count; i++) { particles.push(new Particle(x, y, color, type)); }
         }
 
         function loop() {
@@ -259,7 +246,6 @@
             ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.globalCompositeOperation = 'lighter'; 
-
             for (let i = particles.length - 1; i >= 0; i--) {
                 particles[i].update();
                 particles[i].draw(ctx);
@@ -268,20 +254,19 @@
             requestAnimationFrame(loop);
         }
 
-        // --- 5. CHỮ VÀ ẢNH BAY (ĐÃ CẬP NHẬT LOGIC CHỐNG ĐÈ) ---
+        // --- 5. HỆ THỐNG BAY KHÔNG ĐÈ NHAU (FIXED OVERLAP) ---
         
-        // Hàm tạo mới nhận thêm tham số forceType (ép kiểu ảnh/chữ) và zone (khu vực)
+        // Mảng chứa các vị trí ngang (left%) đang bị chiếm giữ
+        let activeHorizontalPositions = [];
+
         function createFloating(forceType = null, zone = 'random') {
             const el = document.createElement('div');
             el.className = 'floating-element';
             
-            // Xác định loại (Ảnh hay Chữ)
+            // Random loại (Ảnh hoặc Chữ)
             let isImage;
-            if (forceType !== null) {
-                isImage = forceType === 'image';
-            } else {
-                isImage = Math.random() < 0.5 && images.length > 0;
-            }
+            if (forceType !== null) { isImage = forceType === 'image'; } 
+            else { isImage = Math.random() < 0.5 && images.length > 0; }
 
             if (isImage) {
                 el.classList.add('is-image');
@@ -295,36 +280,76 @@
                 el.style.borderColor = el.style.color;
             }
 
-            // Xử lý vị trí (Kỹ thuật phân vùng để tránh đè nhau)
+            // --- THUẬT TOÁN CHỐNG ĐÈ ---
             let leftPos;
-            if (zone === 'left') {
-                 // Vùng trái: 25% -> 45%
-                 leftPos = Math.random() * 20 + 25;
-            } else if (zone === 'right') {
-                 // Vùng phải: 55% -> 75%
-                 leftPos = Math.random() * 20 + 55;
-            } else {
-                // Ngẫu nhiên chuẩn: 25% -> 75%
-                leftPos = Math.random() * 50 + 25;
+            let attempts = 0;
+            let validPosition = false;
+            // Khoảng cách an toàn giữa 2 phần tử (tính bằng %)
+            const minDistance = 20; 
+
+            // Xác định vùng thả
+            let minRange = 10, maxRange = 90;
+            if (zone === 'left') { minRange = 10; maxRange = 40; }
+            if (zone === 'right') { minRange = 60; maxRange = 90; }
+
+            // Thử tối đa 15 lần để tìm chỗ trống
+            while (attempts < 15 && !validPosition) {
+                attempts++;
+                leftPos = Math.random() * (maxRange - minRange) + minRange;
+                
+                // Kiểm tra xem vị trí này có gần ai không
+                let collision = false;
+                for (let activePos of activeHorizontalPositions) {
+                    if (Math.abs(leftPos - activePos) < minDistance) {
+                        collision = true;
+                        break;
+                    }
+                }
+                
+                if (!collision) {
+                    validPosition = true;
+                }
             }
+
+            // Nếu không tìm được chỗ, hủy lệnh tạo để tránh đè xấu
+            if (!validPosition) return;
+
+            // Chấp nhận vị trí
             el.style.left = leftPos + '%';
             
-            el.style.animationDuration = (Math.random() * 5 + 12) + 's'; 
+            // Ghi nhớ vị trí này
+            activeHorizontalPositions.push(leftPos);
+
+            // Thời gian bay (Random từ 12s đến 18s)
+            const duration = (Math.random() * 6 + 12);
+            el.style.animationDuration = duration + 's'; 
+            
             document.getElementById('floating-container').appendChild(el);
-            setTimeout(() => el.remove(), 17000);
+
+            // QUAN TRỌNG: Giải phóng vị trí trong mảng sau một khoảng thời gian
+            // (Khi phần tử đã bay lên cao, chỗ dưới đất lại trống cho người khác)
+            setTimeout(() => {
+                const index = activeHorizontalPositions.indexOf(leftPos);
+                if (index > -1) {
+                    activeHorizontalPositions.splice(index, 1);
+                }
+            }, duration * 1000 * 0.4); // Giải phóng sau 40% thời gian bay
+
+            // Xóa phần tử khỏi DOM khi bay xong
+            setTimeout(() => el.remove(), duration * 1000);
         }
 
         function startShow() {
             loop();
+            
             // Bắn phát đầu tiên
             createFirework();
             
-            // YÊU CẦU MỚI: Xuất hiện cùng lúc 1 Ảnh và 1 Chữ, không đè nhau
-            // Ép buộc 1 ảnh bên trái, 1 chữ bên phải ngay lập tức
+            // Xuất hiện ngay lập tức 1 ảnh bên trái, 1 chữ bên phải
             createFloating('image', 'left');
             createFloating('text', 'right');
 
-            // Cài đặt lặp lại cho các lần sau (quay về chế độ ngẫu nhiên)
+            // Cài đặt vòng lặp
             setInterval(createFirework, 800); 
             setInterval(() => createFloating(null, 'random'), 2500); 
         }
