@@ -6,7 +6,7 @@
     <title>Happy New Year 2026</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        /* --- CSS GIAO DIỆN --- */
+        /* --- GIAO DIỆN --- */
         :root { --neon-pink: #ff66c4; --neon-purple: #ad00ff; --neon-blue: #00ffff; --bg-color: #050505; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: var(--bg-color); overflow: hidden; font-family: 'Poppins', sans-serif; color: white; }
 
@@ -32,16 +32,15 @@
         
         #countdown-text { font-family: 'Dancing Script', cursive; font-size: 120px; text-shadow: 0 0 30px var(--neon-purple); }
         
-        #audio-status { margin-top: 10px; font-size: 12px; color: #00ff00; }
+        #status-msg { margin-top: 15px; font-size: 14px; color: yellow; }
     </style>
 </head>
 <body>
 
     <div id="start-screen" class="overlay-screen">
         <h1 style="font-size: 40px; text-align: center;">CHÚC MỪNG NĂM MỚI 2026</h1>
-        <p style="color: #aaa; margin-top: 10px;">Dùng file nhạc: tieng_phao_hoa_no-www_tiengdong_com.mp3</p>
-        <div id="audio-status"></div>
-        <button id="btn-start">BẤM ĐỂ BẮT ĐẦU 🎆</button>
+        <div id="status-msg">Đang tải file nhạc: tieng_phao_hoa_no-www_tiengdong_com.mp3 ...</div>
+        <button id="btn-start" style="display:none;">BẤM ĐỂ BẮT ĐẦU 🎆</button>
     </div>
 
     <div id="intro-screen" class="overlay-screen hidden">
@@ -54,60 +53,37 @@
     </div>
 
     <script>
-        // --- CẤU HÌNH DỮ LIỆU ---
+        // --- 1. CẤU HÌNH DỮ LIỆU ---
         const messages = ["Chúc mừng năm mới 2026! 🎆", "Vạn sự như ý ✨", "Tiền vào như nước 💰", "Sức khỏe dồi dào 💪", "Gia đình hạnh phúc ❤️", "Công danh thăng tiến 🚀", "An khang thịnh vượng 🧧"];
         const images = ["https://cdn-icons-png.flaticon.com/512/3210/3210141.png", "https://cdn-icons-png.flaticon.com/512/3063/3063065.png"];
 
-        // --- HỆ THỐNG ÂM THANH MỚI (CHỈ DÙNG FILE CỦA BẠN) ---
-        const MyAudio = {
-            file: 'tieng_phao_hoa_no-www_tiengdong_com.mp3', // Tên file chính xác
-            buffer: null,
-            ctx: null,
-
-            // Tải file âm thanh vào bộ nhớ trước để không bị trễ
-            load: function() {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.ctx = new AudioContext();
-                
-                fetch(this.file)
-                    .then(response => {
-                        if (!response.ok) {
-                            document.getElementById('audio-status').innerText = "Lỗi: Không tìm thấy file nhạc! Hãy kiểm tra lại tên file.";
-                            document.getElementById('audio-status').style.color = "red";
-                            throw new Error("File not found");
-                        }
-                        return response.arrayBuffer();
-                    })
-                    .then(arrayBuffer => this.ctx.decodeAudioData(arrayBuffer))
-                    .then(decodedAudio => {
-                        this.buffer = decodedAudio;
-                        document.getElementById('audio-status').innerText = "Đã tải xong file nhạc ✅";
-                    })
-                    .catch(e => console.error(e));
-            },
-
-            // Phát âm thanh từ bộ nhớ
-            play: function() {
-                if (!this.ctx || !this.buffer) return; // Chưa tải xong thì không phát
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-
-                const source = this.ctx.createBufferSource();
-                source.buffer = this.buffer;
-                
-                // Tăng âm lượng lên 1.5 lần nếu file gốc hơi nhỏ
-                const gainNode = this.ctx.createGain();
-                gainNode.gain.value = 1.5; 
-
-                source.connect(gainNode);
-                gainNode.connect(this.ctx.destination);
-                source.start(0);
-            }
+        // --- 2. XỬ LÝ ÂM THANH (CHỈ DÙNG FILE CỦA BẠN) ---
+        // Tên file chính xác bạn cung cấp
+        const AUDIO_FILE = "tieng_phao_hoa_no-www_tiengdong_com.mp3";
+        const boomSound = new Audio();
+        
+        // Kiểm tra xem file có tồn tại không
+        boomSound.src = AUDIO_FILE;
+        boomSound.oncanplaythrough = () => {
+            document.getElementById('status-msg').innerText = "Đã tìm thấy file nhạc ✅ Sẵn sàng!";
+            document.getElementById('status-msg').style.color = "#00ff00";
+            document.getElementById('btn-start').style.display = "block";
+        };
+        boomSound.onerror = () => {
+            document.getElementById('status-msg').innerText = "LỖI: Không tìm thấy file 'tieng_phao_hoa_no-www_tiengdong_com.mp3'. Hãy kiểm tra lại thư mục!";
+            document.getElementById('status-msg').style.color = "red";
+            // Vẫn hiện nút start để chạy hình ảnh dù không có tiếng
+            document.getElementById('btn-start').style.display = "block";
         };
 
-        // Tải nhạc ngay khi mở trang
-        MyAudio.load();
+        function playMySound() {
+            // Clone node để cho phép nhiều tiếng nổ đè lên nhau
+            const sound = boomSound.cloneNode();
+            sound.volume = 1.0; // Max volume
+            sound.play().catch(e => console.log("Chưa tương tác với web nên chưa phát được tiếng"));
+        }
 
-        // --- XỬ LÝ SỰ KIỆN ---
+        // --- 3. LOGIC CHƯƠNG TRÌNH ---
         const startBtn = document.getElementById('btn-start');
         const startScreen = document.getElementById('start-screen');
         const introScreen = document.getElementById('intro-screen');
@@ -115,19 +91,10 @@
         const countdownText = document.getElementById('countdown-text');
 
         startBtn.addEventListener('click', () => {
-            // Mồi âm thanh để trình duyệt cấp quyền
-            if (MyAudio.ctx && MyAudio.ctx.state === 'suspended') MyAudio.ctx.resume();
-            
-            // Phát thử 1 tiếng nhẹ (volume cực nhỏ) để kích hoạt loa
-            if(MyAudio.buffer) {
-                const source = MyAudio.ctx.createBufferSource();
-                source.buffer = MyAudio.buffer;
-                const gain = MyAudio.ctx.createGain();
-                gain.gain.value = 0.01; // Gần như im lặng
-                source.connect(gain);
-                gain.connect(MyAudio.ctx.destination);
-                source.start(0);
-            }
+            // Phát thử một tiếng cực nhỏ để trình duyệt cho phép âm thanh hoạt động
+            const unlockAudio = new Audio(AUDIO_FILE);
+            unlockAudio.volume = 0.01;
+            unlockAudio.play();
 
             startScreen.classList.add('hidden');
             introScreen.classList.remove('hidden');
@@ -140,7 +107,7 @@
                 } else if (count === 0) {
                     countdownText.innerHTML = "HAPPY<br>NEW YEAR";
                     countdownText.style.fontSize = "80px";
-                    MyAudio.play(); // Nổ bùm ngay chữ chúc mừng
+                    playMySound(); // Nổ bùm
                 } else {
                     clearInterval(timer);
                     introScreen.classList.add('hidden');
@@ -150,7 +117,7 @@
             }, 1000);
         });
 
-        // --- PHÁO HOA (Canvas) ---
+        // --- 4. HỆ THỐNG PHÁO HOA ---
         const canvas = document.getElementById('fireworks-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -164,14 +131,14 @@
             const colors = ['#ff0043', '#14fc56', '#1e7fff', '#e60aff', '#ffbf36', '#ffffff'];
             const color = colors[Math.floor(Math.random() * colors.length)];
             
-            // CHỈ GỌI HÀM PHÁT NHẠC CỦA BẠN (Delay 200ms để khớp hình)
-            setTimeout(() => MyAudio.play(), 200);
+            // CHỈ GỌI FILE NHẠC CỦA BẠN - KHÔNG CÒN CÁI NÀO KHÁC
+            setTimeout(() => playMySound(), 100);
 
-            for (let i = 0; i < 60; i++) {
+            for (let i = 0; i < 70; i++) {
                 particles.push({
                     x: x, y: y,
-                    vx: (Math.random() - 0.5) * 12,
-                    vy: (Math.random() - 0.5) * 12,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15,
                     alpha: 1, color: color,
                     decay: Math.random() * 0.015 + 0.015
                 });
@@ -186,9 +153,9 @@
 
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
-                p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.alpha -= p.decay;
+                p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.alpha -= p.decay;
                 
-                ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2); 
+                ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); 
                 ctx.fillStyle = p.color; ctx.globalAlpha = p.alpha; ctx.fill();
 
                 if (p.alpha <= 0) particles.splice(i, 1);
@@ -196,7 +163,7 @@
             requestAnimationFrame(loop);
         }
 
-        // --- HỆ THỐNG CHỮ/ẢNH BAY ---
+        // --- 5. CHỮ VÀ ẢNH BAY ---
         function createFloating() {
             const el = document.createElement('div');
             el.className = 'floating-element';
@@ -220,8 +187,8 @@
 
         function startShow() {
             loop();
-            setInterval(createFirework, 1000); // 1 giây bắn 1 quả
-            setInterval(createFloating, 1500); // 1.5 giây bay 1 chữ
+            setInterval(createFirework, 1200); // Tốc độ bắn
+            setInterval(createFloating, 1500); // Tốc độ thả chữ
         }
     </script>
 </body>
