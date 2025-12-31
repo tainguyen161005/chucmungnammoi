@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pháo Hoa Tỏa Rộng 2026 (Style Ảnh 1)</title>
+    <title>Pháo Hoa 2026 - Căn Giữa</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* --- GIAO DIỆN --- */
@@ -24,16 +24,34 @@
         
         /* Canvas pháo hoa */
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
-            /* Hiệu ứng phát sáng nhẹ cho canvas */
             filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
         }
         #floating-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
 
-        /* Phần tử bay (Chữ/Ảnh) */
-        .floating-element { position: absolute; bottom: -250px; padding: 10px 25px; border-radius: 30px; font-size: 22px; font-weight: bold; color: white; background: rgba(0, 0, 0, 0.5); border: 2px solid var(--neon-pink); box-shadow: 0 0 15px var(--neon-pink); text-shadow: 0 0 5px white; white-space: nowrap; animation: floatUp linear forwards; }
-        .floating-element.is-image { padding: 0; background: transparent; border: none; box-shadow: none; }
+        /* Phần tử bay (Chữ/Ảnh) - ĐÃ CĂN CHỈNH LẠI */
+        .floating-element { 
+            position: absolute; 
+            bottom: -250px; 
+            padding: 10px 25px; 
+            border-radius: 30px; 
+            font-size: 22px; 
+            font-weight: bold; 
+            color: white; 
+            background: rgba(0, 0, 0, 0.5); 
+            border: 2px solid var(--neon-pink); 
+            box-shadow: 0 0 15px var(--neon-pink); 
+            text-shadow: 0 0 5px white; 
+            
+            /* Giới hạn chiều rộng để không bị tràn lề nếu chữ dài */
+            max-width: 400px; 
+            text-align: center; 
+            white-space: normal; /* Cho phép xuống dòng */
+            
+            animation: floatUp linear forwards; 
+        }
         
-        /* Chỉnh kích thước ảnh bay */
+        .floating-element.is-image { padding: 0; background: transparent; border: none; box-shadow: none; max-width: none; }
+        
         .floating-element img { 
             width: 180px; height: auto; 
             border-radius: 15px; 
@@ -70,7 +88,6 @@
         // --- 1. CẤU HÌNH DỮ LIỆU ---
         const messages = ["Chúc mừng năm mới 2026! 🎆", "Vạn sự như ý ✨", "Tiền vào như nước 💰", "Sức khỏe dồi dào 💪", "Gia đình hạnh phúc ❤️", "Công danh thăng tiến 🚀", "An khang thịnh vượng 🧧", "Xinh đẹp rạng ngời 😍"];
         
-        // LƯU Ý: Bạn cần đảm bảo các file ảnh này nằm cùng thư mục với file HTML
         const images = [
             "5f0fcd1a-df75-43f3-b37b-e9b36a427b6f.jpg",
             "da62a5c5-ce57-41f4-b46c-860e4e4c8028.jpg",
@@ -90,7 +107,6 @@
             document.getElementById('status-msg').style.color = "#00ff00";
             document.getElementById('btn-start').style.display = "block";
         };
-        // Nếu lỗi file nhạc, vẫn cho chạy pháo hoa
         boomSound.onerror = () => {
             document.getElementById('status-msg').innerText = "Không tìm thấy file nhạc (Vẫn chạy hình ảnh).";
             document.getElementById('btn-start').style.display = "block";
@@ -110,7 +126,6 @@
         const countdownText = document.getElementById('countdown-text');
 
         startBtn.addEventListener('click', () => {
-            // Mồi âm thanh để trình duyệt cho phép phát
             const unlockAudio = new Audio(AUDIO_FILE);
             unlockAudio.volume = 0.01;
             unlockAudio.play().catch(e=>{});
@@ -136,7 +151,7 @@
             }, 1000);
         });
 
-        // --- 4. HỆ THỐNG PHÁO HOA (TỎA RỘNG & RƠI - STYLE ẢNH 1) ---
+        // --- 4. HỆ THỐNG PHÁO HOA ---
         const canvas = document.getElementById('fireworks-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -144,7 +159,6 @@
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize); resize();
 
-        // Class Hạt pháo hoa
         class Particle {
             constructor(x, y, color, type) {
                 this.x = x;
@@ -152,21 +166,18 @@
                 this.prevX = x;
                 this.prevY = y;
                 this.color = color;
-                this.type = type; // 'willow' (rủ xuống) hoặc 'burst' (nổ tròn)
+                this.type = type; 
 
                 const angle = Math.random() * Math.PI * 2;
-                // Tốc độ nổ: Tăng lên để pháo tỏa rộng hơn
                 const speed = type === 'willow' ? Math.random() * 18 + 5 : Math.random() * 22 + 8;
                 this.vx = Math.cos(angle) * speed;
                 this.vy = Math.sin(angle) * speed;
                 
-                // Vật lý: Trọng lực & Lực cản
-                this.gravity = 0.2; // Trọng lực vừa phải để rơi đẹp
-                // Lực cản càng cao (gần 1) thì bay càng xa trước khi dừng lại
+                this.gravity = 0.2; 
                 this.friction = type === 'willow' ? 0.96 : 0.93; 
 
                 this.alpha = 1;
-                this.decay = Math.random() * 0.015 + 0.005; // Tốc độ tan biến
+                this.decay = Math.random() * 0.015 + 0.005;
                 this.lineWidth = Math.random() * 2 + 1;
             }
 
@@ -176,13 +187,12 @@
                 
                 this.vx *= this.friction;
                 this.vy *= this.friction;
-                this.vy += this.gravity; // Áp dụng trọng lực để tạo độ rơi
+                this.vy += this.gravity; 
 
                 this.x += this.vx;
                 this.y += this.vy;
                 this.alpha -= this.decay;
 
-                // Hiệu ứng lấp lánh cho loại willow
                 if (this.type === 'willow' && Math.random() < 0.2) {
                      this.alpha = Math.random(); 
                 }
@@ -199,7 +209,6 @@
                 ctx.lineCap = 'round';
                 ctx.stroke();
                 
-                // Đốm sáng đầu hạt
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.lineWidth/2, 0, Math.PI*2);
                 ctx.fillStyle = 'white';
@@ -211,23 +220,20 @@
 
         function createFirework() {
             const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
-            const y = Math.random() * canvas.height * 0.5 + canvas.height * 0.1; // Bắn cao hơn một chút
+            const y = Math.random() * canvas.height * 0.5 + canvas.height * 0.1;
             
             const rand = Math.random();
             let type, color, count;
 
             if (rand < 0.5) {
-                // Loại Willow (Cây liễu) - Tỏa rộng và rơi xuống (GIỐNG ẢNH 1)
                 type = 'willow';
-                color = 'hsl(' + Math.floor(Math.random() * 40 + 20) + ', 100%, 60%)'; // Vàng/Cam
-                count = 180; // Nhiều hạt để dày dặn
+                color = 'hsl(' + Math.floor(Math.random() * 40 + 20) + ', 100%, 60%)'; 
+                count = 180; 
             } else if (rand < 0.8) {
-                // Loại Burst màu xanh
                 type = 'burst';
-                color = 'hsl(' + Math.floor(Math.random() * 60 + 180) + ', 100%, 70%)'; // Cyan/Blue
+                color = 'hsl(' + Math.floor(Math.random() * 60 + 180) + ', 100%, 70%)'; 
                 count = 120;
             } else {
-                // Loại Trắng bạc lấp lánh
                 type = 'burst';
                 color = '#ffffff';
                 count = 100;
@@ -241,11 +247,10 @@
         }
 
         function loop() {
-            // Tạo vệt đuôi dài (Motion Trails)
             ctx.globalCompositeOperation = 'destination-out';
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; // 0.15: Đuôi dài vừa phải, mượt mà
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.globalCompositeOperation = 'lighter'; // Cộng hưởng ánh sáng
+            ctx.globalCompositeOperation = 'lighter'; 
 
             for (let i = particles.length - 1; i >= 0; i--) {
                 particles[i].update();
@@ -255,7 +260,7 @@
             requestAnimationFrame(loop);
         }
 
-        // --- 5. CHỮ VÀ ẢNH BAY ---
+        // --- 5. CHỮ VÀ ẢNH BAY (ĐÃ CẬP NHẬT VỊ TRÍ) ---
         function createFloating() {
             const el = document.createElement('div');
             el.className = 'floating-element';
@@ -263,9 +268,8 @@
             if (Math.random() < 0.5 && images.length > 0) {
                 el.classList.add('is-image');
                 const img = document.createElement('img');
-                // Lấy ảnh ngẫu nhiên nhưng kiểm tra lỗi
                 img.src = images[Math.floor(Math.random() * images.length)];
-                img.onerror = function() { el.remove(); }; // Xóa nếu không load được ảnh
+                img.onerror = function() { el.remove(); };
                 el.appendChild(img);
             } else {
                 el.innerText = messages[Math.floor(Math.random() * messages.length)];
@@ -273,7 +277,11 @@
                 el.style.borderColor = el.style.color;
             }
 
-            el.style.left = Math.random() * 80 + 10 + '%'; 
+            // [QUAN TRỌNG] Điều chỉnh vị trí xuất hiện:
+            // Chỉ random từ 25% đến 75% chiều rộng màn hình.
+            // Điều này đảm bảo nội dung luôn ở khu vực giữa.
+            el.style.left = Math.random() * 50 + 25 + '%'; 
+            
             el.style.animationDuration = (Math.random() * 5 + 10) + 's'; 
             document.getElementById('floating-container').appendChild(el);
             setTimeout(() => el.remove(), 17000);
@@ -281,6 +289,12 @@
 
         function startShow() {
             loop();
+            // Bắn ngay lập tức
+            createFirework();
+            createFloating(); 
+            setTimeout(createFloating, 1200);
+
+            // Cài đặt lặp lại
             setInterval(createFirework, 800); 
             setInterval(createFloating, 2500); 
         }
